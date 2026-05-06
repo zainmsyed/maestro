@@ -1,0 +1,11 @@
+Parent,ID,Work Item Type,Title 1,Title 2,Title 3,Title 4,Title 5,State,Assigned To,Iteration Path,Story Points,Target Date,Area Path
+,,User Story,,,,,Orphan login story,New,Robin Roe <robin@example.com>,,,,Platform\\Area
+,F-ORPH,Feature,,Orphaned Platform Work,,,,Active,Taylor Team <taylor@example.com>,Program\\Sprint 10,8,14/05/2026,Platform\\Area
+,E-1,Epic,Platform Modernization,,,,,Active,Alex Admin <alex@example.com>,Program\\Sprint 11,,2026-05-01,Platform\\Area
+E-1,F-1,Feature,Platform Modernization,CSV Importer,,,,Active,Pat Parser <pat@example.com>,Program\\Sprint 11,13,2026/05/10,Platform\\Area
+F-1,,User Story,Platform Modernization,CSV Importer,Normalize headers,,,New,Sage Story <sage@example.com>,Program\\Sprint 12,3,05/11/2026,Platform\\Area
+F-1,S-2,Product Backlog Item,Platform Modernization,CSV Importer,Detect target dates,,,Active,Chris Check <chris@example.com>,Program\\Sprint 12,5,2026-05-20T14:30:00Z,Platform\\Area
+F-1,S-3,Requirement,Platform Modernization,CSV Importer,Handle point warnings,,,Active,Casey Coach (casey@example.com),Program\\Sprint 13,tbd,"May 22, 2026",Platform\\Area
+F-1,S-4,User Story,Platform Modernization,CSV Importer,,,Deep nested title,New,Deep User <deep@example.com>,Program\\Sprint 12,2,2026-06-01,Platform\\Area
+,500001,User Story,,,,,Archive story,Completed,Archive User <archive@example.com>,Program\\Archive\\FY26 Q3,5.0,02/13/2026 12:00:00 AM,Platform\\Area
+,500002,User Story,,,,,Backlog story,New,Backlog User <backlog@example.com>,Program\\Backlog\\Queue,,,Platform\\Area

@@ -1,9 +1,9 @@
 # Story 004: Update REST API for Story entity and date_source
 
-**Status:** not-started
+**Status:** in-progress  
 **Type:** —
 **Created:** 2026-05-06
-**Last accessed:** 2026-05-06
+**Last accessed:** 2026-05-06  
 **Completed:** —
 
 ---
