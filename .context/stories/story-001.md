@@ -1,10 +1,10 @@
 # Story 001: Bootstrap Go backend with SQLite schema
 
-**Status:** in-progress  
+**Status:** complete  
 **Type:** —  
 **Created:** 2026-05-06  
 **Last accessed:** 2026-05-06  
-**Completed:** —
+**Completed:** 2026-05-06
 
 ---
 

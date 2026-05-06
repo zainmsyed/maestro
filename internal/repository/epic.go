@@ -78,8 +78,6 @@ func (r *SQLiteEpicRepository) List(ctx context.Context) ([]models.Epic, error) 
 	return epics, nil
 }
 
-type scanner interface{ Scan(...any) error }
-
 func scanEpic(s scanner) (*models.Epic, error) {
 	var epic models.Epic
 	var original, committed, actual sql.NullString

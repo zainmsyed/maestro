@@ -6,6 +6,13 @@
     "3530e9b5": "The user wants to plan their project.\nExisting story files already exist in .con",
     "db38aa7d": "Implement the in-progress story in .context/stories/story-001.md.\n\nYour job:\n1. ",
     "0086adff": "Implement the in-progress story in .context/stories/story-001.md.\n\nYour job:\n1. ",
-    "81d28887": "how do we visually verify this"
+    "81d28887": "how do we visually verify this",
+    "718ca28e": "https://github.com/zainmsyed/maestro.git\n\nplease push to main here",
+    "de9d792f": "https://github.com/zainmsyed/maestro.git\n\nplease push to main here",
+    "6f6749b3": "https://github.com/zainmsyed/maestro.git\n\nplease push to main here",
+    "85b9de08": "https://github.com/zainmsyed/maestro.git\n\nplease push to main here",
+    "8846562e": "are you using the pi-fff by default",
+    "93bcf1e9": "can you make sure all the right things are in gitignore",
+    "acc2be21": "yes commit and push that with all the rest"
   }
 }

@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+type scanner interface{ Scan(...any) error }
+
 const (
 	dateFormat      = "2006-01-02"
 	timestampFormat = time.RFC3339

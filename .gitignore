@@ -1,14 +1,31 @@
-node_modules/
-.fallow/
-.local/
-.env
-.env.local
-.env.*.local
-*.local
+# ── OS / Editor ──
 .DS_Store
 Thumbs.db
 *.log
 *.tmp
 *.temp
 *.swp
+*~
+
+# ── Environment ──
+.env
+.env.local
+.env.*.local
+*.local
+
+# ── Node / Frontend ──
+node_modules/
+frontend/dist/
+
+# ── Go ──
+/maestro
+*.exe
+*.test
+maestro.db
+*.db-journal
+coverage.out
+
+# ── Tools ──
+.fallow/
+.local/
 .jj/

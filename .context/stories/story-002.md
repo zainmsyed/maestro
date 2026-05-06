@@ -1,6 +1,6 @@
 # Story 002: Build Azure DevOps import parser
 
-**Status:** not-started  
+**Status:** in-progress  
 **Type:** —  
 **Created:** 2026-05-06  
 **Last accessed:** 2026-05-06  

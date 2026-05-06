@@ -186,6 +186,120 @@ func newRepos(t *testing.T) repository.Repositories {
 	return repository.New(database)
 }
 
+func TestEpicGetByID_NotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	_, err := repos.Epics.GetByID(ctx, "E-NOT-FOUND")
+	if err == nil {
+		t.Fatalf("expected error for missing epic, got nil")
+	}
+}
+
+func TestEpicCreate_DuplicateID(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	epic := &models.Epic{ID: "E-DUP", Title: "First", Description: "", Status: "Active"}
+	if err := repos.Epics.Create(ctx, epic); err != nil {
+		t.Fatalf("create first epic: %v", err)
+	}
+
+	duplicate := &models.Epic{ID: "E-DUP", Title: "Second", Description: "", Status: "New"}
+	if err := repos.Epics.Create(ctx, duplicate); err == nil {
+		t.Fatalf("expected error for duplicate epic id, got nil")
+	}
+}
+
+func TestEpicIsSynthetic_RoundTrip(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	epic := &models.Epic{ID: "E-SYN", Title: "Unassigned", Description: "", Status: "Active", IsSynthetic: true}
+	if err := repos.Epics.Create(ctx, epic); err != nil {
+		t.Fatalf("create synthetic epic: %v", err)
+	}
+
+	got, err := repos.Epics.GetByID(ctx, epic.ID)
+	if err != nil {
+		t.Fatalf("get synthetic epic: %v", err)
+	}
+	if !got.IsSynthetic {
+		t.Fatalf("expected IsSynthetic=true, got false")
+	}
+
+	regular := &models.Epic{ID: "E-REG", Title: "Regular", Description: "", Status: "Active", IsSynthetic: false}
+	if err := repos.Epics.Create(ctx, regular); err != nil {
+		t.Fatalf("create regular epic: %v", err)
+	}
+
+	got2, err := repos.Epics.GetByID(ctx, regular.ID)
+	if err != nil {
+		t.Fatalf("get regular epic: %v", err)
+	}
+	if got2.IsSynthetic {
+		t.Fatalf("expected IsSynthetic=false, got true")
+	}
+}
+
+func TestFeatureGetByID_NotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	_, err := repos.Features.GetByID(ctx, "F-NOT-FOUND")
+	if err == nil {
+		t.Fatalf("expected error for missing feature, got nil")
+	}
+}
+
+func TestSprintGetByID_NotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	_, err := repos.Sprints.GetByID(ctx, "S-NOT-FOUND")
+	if err == nil {
+		t.Fatalf("expected error for missing sprint, got nil")
+	}
+}
+
+func TestAuditCreate_NilDatesAndReason(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	audit := &models.DateAuditLog{
+		EntityType: "feature",
+		EntityID:   "F-1",
+		ChangedBy:  "Zain",
+		OldDate:    nil,
+		NewDate:    nil,
+		DeltaDays:  0,
+		Reason:     nil,
+	}
+	if err := repos.Audits.Create(ctx, audit); err != nil {
+		t.Fatalf("create audit with nil fields: %v", err)
+	}
+	if audit.ID == 0 {
+		t.Fatalf("expected audit id to be set")
+	}
+
+	list, err := repos.Audits.List(ctx)
+	if err != nil {
+		t.Fatalf("list audits: %v", err)
+	}
+	if len(list) != 1 {
+		t.Fatalf("expected 1 audit, got %d", len(list))
+	}
+	if list[0].OldDate != nil || list[0].NewDate != nil || list[0].Reason != nil {
+		t.Fatalf("expected nil fields to round-trip as nil")
+	}
+}
+
 func date(year int, month time.Month, day int) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 }

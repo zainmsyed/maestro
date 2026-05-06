@@ -75,7 +75,7 @@ func Migrate(db *sql.DB) error {
 	}
 	defer tx.Rollback()
 
-	for _, statement := range strings.Split(schemaSQL, ";") {
+	for _, statement := range strings.Split(schemaSQL, ";\n") {
 		stmt := strings.TrimSpace(statement)
 		if stmt == "" {
 			continue
