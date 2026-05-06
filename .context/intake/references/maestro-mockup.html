@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maestro — Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0e0f; --bg2: #161618; --bg3: #1d1d20; --bg4: #242428;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+    --text: #e8e6e1; --text2: #8a8884; --text3: #555452;
+    --accent: #c8a96e; --accent2: #8b6f3e;
+    --blue: #4a7fa5; --blue-light: #6ba3cc;
+    --green: #5a8f6a; --green-light: #7ab88a;
+    --coral: #c4614a; --coral-light: #e07d66;
+    --purple: #7b6fa0; --purple-light: #a090cc;
+    --red: #c44a4a; --amber: #c4914a;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: var(--font-mono); background: var(--bg); color: var(--text); font-size: 12px; line-height: 1.5; }
+
+  /* ── SCREENS ── */
+  .screen { display: none; height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ── LAYOUT ── */
+  .layout { flex-direction: row; width: 100%; }
+  .sidebar { width: 52px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 4px; flex-shrink: 0; }
+  .logo { font-family: var(--font-display); font-size: 18px; font-weight: 500; color: var(--accent); margin-bottom: 20px; letter-spacing: -0.02em; cursor: pointer; }
+  .nav-btn { width: 34px; height: 34px; border-radius: 6px; border: none; background: transparent; color: var(--text3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .nav-btn:hover { background: var(--bg3); color: var(--text2); }
+  .nav-btn.active { background: var(--bg4); color: var(--accent); }
+  .nav-btn svg { width: 15px; height: 15px; }
+  .sidebar-spacer { flex: 1; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+  .topbar { height: 48px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 0; flex-shrink: 0; background: var(--bg2); }
+  .topbar-title { font-family: var(--font-display); font-size: 15px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
+  .topbar-sep { color: var(--text3); margin: 0 8px; }
+  .topbar-project { font-size: 11px; color: var(--text2); }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .view-tabs { display: flex; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 3px; gap: 2px; }
+  .vtab { font-family: var(--font-mono); font-size: 10px; padding: 4px 10px; border-radius: 4px; border: none; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s; letter-spacing: 0.03em; }
+  .vtab:hover { color: var(--text); }
+  .vtab.active { background: var(--bg); color: var(--accent); border: 1px solid var(--border2); }
+  .import-btn { font-family: var(--font-mono); font-size: 10px; padding: 6px 12px; border-radius: 5px; border: 1px solid var(--accent2); background: transparent; color: var(--accent); cursor: pointer; letter-spacing: 0.03em; transition: all 0.15s; }
+  .import-btn:hover { background: rgba(200,169,110,0.08); }
+  .body { flex: 1; display: flex; overflow: hidden; }
+
+  /* ── ROW LABELS ── */
+  .row-labels { width: 210px; border-right: 1px solid var(--border); flex-shrink: 0; overflow-y: auto; overflow-x: hidden; }
+  .row-labels::-webkit-scrollbar { display: none; }
+  .col-header { height: 40px; border-bottom: 1px solid var(--border); background: var(--bg2); display: flex; align-items: center; padding: 0 14px; position: sticky; top: 0; z-index: 3; }
+  .col-header-text { font-size: 9px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; }
+  .epic-group { border-bottom: 1px solid var(--border); }
+  .epic-row-label { height: 44px; display: flex; align-items: center; padding: 0 14px; gap: 8px; cursor: pointer; transition: background 0.1s; }
+  .epic-row-label:hover { background: var(--bg3); }
+  .chevron { width: 10px; height: 10px; color: var(--text3); flex-shrink: 0; transition: transform 0.2s; }
+  .chevron.open { transform: rotate(0deg); }
+  .chevron.closed { transform: rotate(-90deg); }
+  .epic-pill { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .epic-name { font-size: 11px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .feature-row-label { height: 34px; display: flex; align-items: center; padding: 0 14px 0 34px; gap: 7px; border-top: 1px solid var(--border); transition: background 0.1s; }
+  .feature-row-label:hover { background: var(--bg3); cursor: pointer; }
+  .feature-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .feature-name { font-size: 10px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── GANTT ── */
+  .gantt-wrap { flex: 1; overflow: auto; position: relative; }
+  .gantt-wrap::-webkit-scrollbar { height: 6px; width: 6px; }
+  .gantt-wrap::-webkit-scrollbar-track { background: var(--bg2); }
+  .gantt-wrap::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+  .gantt-inner { min-width: 780px; }
+  .sprint-header { height: 40px; display: flex; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 2; }
+  .sprint-cell { flex: 0 0 130px; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; padding: 0 10px; cursor: pointer; transition: background 0.1s; }
+  .sprint-cell:hover { background: var(--bg3); }
+  .sprint-cell:last-child { border-right: none; flex: 1; }
+  .sprint-name-label { font-size: 10px; font-weight: 500; color: var(--text2); letter-spacing: 0.03em; }
+  .sprint-date-label { font-size: 9px; color: var(--text3); margin-top: 1px; }
+  .gantt-body { position: relative; }
+  .vgrid-line { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border); pointer-events: none; }
+  .today-line { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--red); pointer-events: none; z-index: 1; opacity: 0.7; }
+  .today-pip { position: absolute; top: 6px; font-size: 8px; color: var(--red); letter-spacing: 0.05em; transform: translateX(-50%); background: var(--bg2); padding: 1px 4px; border-radius: 3px; border: 1px solid var(--red); opacity: 0.85; white-space: nowrap; }
+  .gantt-epic-group { border-bottom: 1px solid var(--border); }
+  .gantt-epic-row { height: 44px; position: relative; display: flex; align-items: center; }
+  .gantt-feature-row { height: 34px; position: relative; display: flex; align-items: center; border-top: 1px solid var(--border); }
+  .gbar { position: absolute; height: 22px; border-radius: 3px; display: flex; align-items: center; padding: 0 8px; cursor: pointer; transition: filter 0.15s, transform 0.15s; }
+  .gbar:hover { filter: brightness(1.2); transform: scaleY(1.05); }
+  .gbar-label { font-family: var(--font-mono); font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.02em; }
+  .fbar { position: absolute; height: 10px; border-radius: 2px; opacity: 0.75; }
+  .slip-flag { position: absolute; font-size: 8px; color: var(--red); letter-spacing: 0.05em; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 3px; }
+  .slip-dot { width: 5px; height: 5px; background: var(--red); border-radius: 50%; }
+
+  /* ── HEALTH PANEL ── */
+  .health-panel { width: 188px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--bg2); overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .health-panel::-webkit-scrollbar { display: none; }
+  .health-header { font-family: var(--font-display); font-size: 14px; font-weight: 300; font-style: italic; color: var(--accent); letter-spacing: -0.01em; margin-bottom: 4px; }
+  .mcard { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 10px 11px; }
+  .mlabel { font-size: 8px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; }
+  .mvalue { font-family: var(--font-display); font-size: 26px; font-weight: 300; line-height: 1; color: var(--text); }
+  .munit { font-size: 13px; color: var(--text3); }
+  .msub { font-size: 9px; color: var(--text3); margin-top: 3px; letter-spacing: 0.02em; }
+  .mtrack { height: 3px; background: var(--bg4); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .mfill { height: 100%; border-radius: 2px; }
+  .mstatus { display: inline-flex; align-items: center; gap: 4px; font-size: 8px; padding: 2px 6px; border-radius: 3px; margin-top: 5px; letter-spacing: 0.05em; }
+  .mstatus.warn { background: rgba(196,145,74,0.15); color: var(--amber); }
+  .mstatus.danger { background: rgba(196,74,74,0.15); color: var(--red); }
+  .mstatus.ok { background: rgba(90,143,106,0.15); color: var(--green-light); }
+
+  /* ── STATUS BAR ── */
+  .statusbar { height: 24px; border-top: 1px solid var(--border); background: var(--bg2); display: flex; align-items: center; padding: 0 20px; gap: 20px; flex-shrink: 0; }
+  .sb-item { font-size: 9px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+  .sb-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+  /* ── DETAIL PANEL ── */
+  .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .detail-overlay.open { opacity: 1; pointer-events: all; }
+  .detail-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 320px; background: var(--bg2); border-left: 1px solid var(--border2); z-index: 11; padding: 24px 20px; transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.16,1,0.3,1); overflow-y: auto; }
+  .detail-panel.open { transform: translateX(0); }
+  .detail-panel::-webkit-scrollbar { display: none; }
+  .dp-close { position: absolute; top: 16px; right: 16px; width: 26px; height: 26px; border-radius: 5px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.15s; }
+  .dp-close:hover { color: var(--text); background: var(--bg4); }
+  .dp-type { font-size: 8px; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+  .dp-title { font-family: var(--font-display); font-size: 20px; font-weight: 300; color: var(--text); letter-spacing: -0.02em; margin-bottom: 16px; line-height: 1.2; }
+  .dp-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .dp-row:last-child { border-bottom: none; }
+  .dp-key { font-size: 10px; color: var(--text3); }
+  .dp-val { font-size: 10px; color: var(--text); text-align: right; }
+  .dp-val.original { color: var(--text3); text-decoration: line-through; }
+  .dp-val.committed { color: var(--accent); }
+  .dp-val.slipped { color: var(--red); }
+  .dp-delta { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; padding: 2px 6px; border-radius: 3px; background: rgba(196,74,74,0.15); color: var(--red); margin-top: 6px; }
+  .dp-section-title { font-size: 8px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin: 20px 0 10px; }
+  .audit-entry { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--bg3); border-radius: 5px; margin-bottom: 6px; border-left: 2px solid var(--border2); }
+  .audit-date { font-size: 9px; color: var(--text3); }
+  .audit-change { font-size: 10px; color: var(--text2); }
+
+  /* ════════════════════════════════
+     ONBOARDING SCREEN
+  ════════════════════════════════ */
+  #screenOnboarding {
+    background: var(--bg);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .ob-wrap {
+    width: 560px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ob-logo {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: -0.03em;
+    margin-bottom: 4px;
+  }
+
+  .ob-tagline {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.04em;
+    margin-bottom: 40px;
+  }
+
+  /* step indicator */
+  .step-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 32px;
+  }
+  .step-pip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .step-circle {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--text3);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .step-circle.active { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 500; }
+  .step-circle.done { background: var(--bg4); border-color: var(--green); color: var(--green-light); }
+  .step-label { font-size: 10px; color: var(--text3); letter-spacing: 0.03em; }
+  .step-label.active { color: var(--text); }
+  .step-connector { flex: 1; height: 1px; background: var(--border); margin: 0 10px; }
+
+  /* cards */
+  .ob-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 28px 24px;
+    display: none;
+  }
+  .ob-card.active { display: block; }
+
+  .ob-card-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  .ob-card-sub {
+    font-size: 10px;
+    color: var(--text3);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  /* file drop */
+  .drop-zone {
+    border: 1px dashed var(--border2);
+    border-radius: 8px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--bg3);
+    margin-bottom: 16px;
+  }
+  .drop-zone:hover { border-color: var(--accent2); background: rgba(200,169,110,0.04); }
+  .drop-icon { font-size: 24px; opacity: 0.4; }
+  .drop-text { font-size: 11px; color: var(--text2); }
+  .drop-formats { font-size: 9px; color: var(--text3); letter-spacing: 0.04em; }
+
+  /* import detected banner */
+  .detected-banner {
+    background: rgba(90,143,106,0.1);
+    border: 1px solid rgba(90,143,106,0.3);
+    border-radius: 6px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .detected-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-light); flex-shrink: 0; margin-top: 3px; }
+  .detected-text { font-size: 10px; color: var(--green-light); line-height: 1.6; }
+  .detected-detail { font-size: 9px; color: var(--text3); margin-top: 2px; }
+
+  .manual-link { font-size: 10px; color: var(--text3); text-decoration: underline; cursor: pointer; transition: color 0.15s; display: inline-block; margin-bottom: 20px; }
+  .manual-link:hover { color: var(--accent); }
+
+  /* form fields */
+  .field-row { display: flex; gap: 12px; margin-bottom: 16px; }
+  .field { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+  .field-label { font-size: 9px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+  .field input, .field select {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    padding: 8px 10px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent2); }
+  .field select option { background: var(--bg3); }
+
+  /* sprint preview */
+  .sprint-preview {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .sp-header { display: flex; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .sp-col { font-size: 8px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; flex: 1; }
+  .sp-row { display: flex; padding: 7px 12px; border-bottom: 1px solid var(--border); align-items: center; }
+  .sp-row:last-child { border-bottom: none; }
+  .sp-row:hover { background: var(--bg4); }
+  .sp-val { font-size: 10px; color: var(--text2); flex: 1; }
+  .sp-val.sprint-num { color: var(--accent); font-weight: 500; }
+  .sp-val.editable { cursor: pointer; border-bottom: 1px dashed var(--border2); display: inline; }
+  .sp-val.editable:hover { color: var(--text); border-color: var(--accent2); }
+  .sp-badge { font-size: 8px; padding: 2px 6px; border-radius: 3px; background: rgba(90,143,106,0.15); color: var(--green-light); }
+  .sp-badge.manual { background: rgba(200,169,110,0.1); color: var(--accent); }
+
+  .preview-label { font-size: 8px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .preview-count { font-size: 9px; color: var(--text2); }
+  .more-sprints { font-size: 9px; color: var(--text3); text-align: center; padding: 6px; }
+
+  /* action row */
+  .ob-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+  .ob-back { font-family: var(--font-mono); font-size: 10px; background: transparent; border: none; color: var(--text3); cursor: pointer; padding: 8px 0; transition: color 0.15s; letter-spacing: 0.03em; }
+  .ob-back:hover { color: var(--text2); }
+  .ob-next { font-family: var(--font-mono); font-size: 10px; padding: 9px 20px; border-radius: 5px; border: 1px solid var(--accent2); background: rgba(200,169,110,0.08); color: var(--accent); cursor: pointer; letter-spacing: 0.03em; transition: all 0.15s; }
+  .ob-next:hover { background: rgba(200,169,110,0.15); }
+  .ob-next.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .ob-next.primary:hover { background: #d4b47a; }
+
+  /* ════════════════════════════════
+     SETTINGS SCREEN
+  ════════════════════════════════ */
+  #screenSettings {
+    background: var(--bg);
+    flex-direction: row;
+  }
+
+  .settings-sidebar {
+    width: 180px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    flex-shrink: 0;
+  }
+
+  .settings-logo {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--accent);
+    padding: 0 16px;
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+  }
+
+  .settings-nav-label { font-size: 8px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 16px; margin-bottom: 4px; margin-top: 16px; }
+  .settings-nav-item { font-size: 11px; color: var(--text2); padding: 8px 16px; cursor: pointer; transition: all 0.1s; display: flex; align-items: center; gap: 8px; }
+  .settings-nav-item:hover { background: var(--bg3); color: var(--text); }
+  .settings-nav-item.active { color: var(--accent); background: rgba(200,169,110,0.07); border-left: 2px solid var(--accent); }
+  .settings-nav-item svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  .settings-main { flex: 1; overflow-y: auto; padding: 32px 40px; }
+  .settings-main::-webkit-scrollbar { display: none; }
+
+  .settings-page { display: none; }
+  .settings-page.active { display: block; }
+
+  .settings-title { font-family: var(--font-display); font-size: 22px; font-weight: 300; color: var(--text); letter-spacing: -0.02em; margin-bottom: 4px; }
+  .settings-subtitle { font-size: 10px; color: var(--text3); margin-bottom: 32px; line-height: 1.6; }
+
+  .settings-section { margin-bottom: 32px; }
+  .settings-section-title { font-size: 9px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 20px; }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row-left { flex: 1; }
+  .settings-row-label { font-size: 11px; color: var(--text); margin-bottom: 2px; }
+  .settings-row-desc { font-size: 9px; color: var(--text3); line-height: 1.5; }
+  .settings-row-right { flex-shrink: 0; }
+
+  .settings-input { font-family: var(--font-mono); font-size: 11px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 5px; padding: 7px 10px; color: var(--text); outline: none; transition: border-color 0.15s; width: 140px; }
+  .settings-input:focus { border-color: var(--accent2); }
+  .settings-select { font-family: var(--font-mono); font-size: 11px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 5px; padding: 7px 10px; color: var(--text); outline: none; transition: border-color 0.15s; width: 140px; cursor: pointer; }
+  .settings-select:focus { border-color: var(--accent2); }
+  .settings-select option { background: var(--bg3); }
+
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+  .toggle { width: 36px; height: 20px; border-radius: 10px; background: var(--bg4); border: 1px solid var(--border2); position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle::after { content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--text3); top: 2px; left: 2px; transition: all 0.2s; }
+  .toggle.on::after { background: var(--bg); left: 18px; }
+  .toggle-label { font-size: 10px; color: var(--text3); }
+  .toggle.on + .toggle-label { color: var(--accent); }
+
+  /* sprint table in settings */
+  .sprint-table { width: 100%; border-collapse: collapse; }
+  .sprint-table th { font-size: 8px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .sprint-table td { font-size: 10px; color: var(--text2); padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  .sprint-table tr:last-child td { border-bottom: none; }
+  .sprint-table tr:hover td { background: var(--bg3); }
+  .sprint-table td.num { color: var(--accent); font-weight: 500; }
+  .sprint-table td.active-sprint { color: var(--green-light); }
+  .sprint-table input.inline-edit { font-family: var(--font-mono); font-size: 10px; background: var(--bg4); border: 1px solid var(--accent2); border-radius: 3px; padding: 3px 6px; color: var(--text); width: 90px; outline: none; }
+  .edit-icon { font-size: 10px; color: var(--text3); cursor: pointer; padding: 2px 5px; border-radius: 3px; transition: all 0.1s; }
+  .edit-icon:hover { background: var(--bg4); color: var(--text2); }
+
+  .add-sprint-btn { font-family: var(--font-mono); font-size: 10px; padding: 7px 14px; border-radius: 5px; border: 1px dashed var(--border2); background: transparent; color: var(--text3); cursor: pointer; transition: all 0.15s; margin-top: 10px; }
+  .add-sprint-btn:hover { border-color: var(--accent2); color: var(--accent); background: rgba(200,169,110,0.04); }
+
+  .save-btn { font-family: var(--font-mono); font-size: 10px; padding: 8px 18px; border-radius: 5px; border: 1px solid var(--accent2); background: rgba(200,169,110,0.08); color: var(--accent); cursor: pointer; letter-spacing: 0.03em; transition: all 0.15s; }
+  .save-btn:hover { background: rgba(200,169,110,0.15); }
+
+  .danger-btn { font-family: var(--font-mono); font-size: 10px; padding: 8px 18px; border-radius: 5px; border: 1px solid rgba(196,74,74,0.4); background: transparent; color: var(--red); cursor: pointer; letter-spacing: 0.03em; transition: all 0.15s; }
+  .danger-btn:hover { background: rgba(196,74,74,0.08); }
+
+  .settings-footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════
+     SCREEN 1: ONBOARDING
+════════════════════════════════ -->
+<div class="screen active" id="screenOnboarding">
+  <div class="ob-wrap">
+    <div class="ob-logo">Maestro</div>
+    <div class="ob-tagline">product roadmap · execution health · sprint intelligence</div>
+
+    <!-- Step bar -->
+    <div class="step-bar">
+      <div class="step-pip">
+        <div class="step-circle done" id="s1c">✓</div>
+        <span class="step-label" id="s1l">import</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-pip">
+        <div class="step-circle active" id="s2c">2</div>
+        <span class="step-label active" id="s2l">sprints</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-pip">
+        <div class="step-circle" id="s3c">3</div>
+        <span class="step-label" id="s3l">confirm</span>
+      </div>
+    </div>
+
+    <!-- Step 1: Import (shown first, then "done") -->
+    <div class="ob-card" id="obStep1">
+      <div class="ob-card-title">Import your DevOps export</div>
+      <div class="ob-card-sub">Upload a CSV or JSON export from Azure DevOps. Maestro will parse your epics, features, and sprint assignments automatically.</div>
+      <div class="drop-zone" onclick="simulateImport()">
+        <div class="drop-icon">⬆</div>
+        <div class="drop-text">drag & drop or click to upload</div>
+        <div class="drop-formats">accepts .csv · .json · azure devops export</div>
+      </div>
+      <div class="ob-actions">
+        <span></span>
+        <button class="ob-next" onclick="simulateImport()">upload file →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Sprints -->
+    <div class="ob-card active" id="obStep2">
+      <div class="ob-card-title">Configure sprints</div>
+      <div class="ob-card-sub">We detected sprint data in your DevOps export. Review below and adjust if needed, or configure manually.</div>
+
+      <!-- Detected sprints banner -->
+      <div class="detected-banner">
+        <div class="detected-dot"></div>
+        <div>
+          <div class="detected-text">Sprint data detected in import</div>
+          <div class="detected-detail">9 sprints · 3-week cadence · starting Apr 7, 2026</div>
+        </div>
+      </div>
+
+      <span class="manual-link" onclick="toggleManual()">↳ configure manually instead</span>
+
+      <!-- Manual config (hidden by default) -->
+      <div id="manualConfig" style="display:none;">
+        <div class="field-row">
+          <div class="field">
+            <span class="field-label">Sprint length</span>
+            <select>
+              <option>1 week</option>
+              <option>2 weeks</option>
+              <option selected>3 weeks</option>
+              <option>4 weeks</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="field-label">First sprint start</span>
+            <input type="date" value="2026-04-07">
+          </div>
+          <div class="field">
+            <span class="field-label">Number of sprints</span>
+            <input type="number" value="9" min="1" max="52">
+          </div>
+        </div>
+      </div>
+
+      <!-- Sprint preview table -->
+      <div class="preview-label">
+        <span>sprint preview</span>
+        <span class="preview-count" id="sprintCount">showing 4 of 9 sprints</span>
+      </div>
+      <div class="sprint-preview">
+        <div class="sp-header">
+          <span class="sp-col">sprint</span>
+          <span class="sp-col">start</span>
+          <span class="sp-col">end</span>
+          <span class="sp-col">source</span>
+        </div>
+        <div class="sp-row">
+          <span class="sp-val sprint-num">S12</span>
+          <span class="sp-val editable" title="click to edit">Apr 7</span>
+          <span class="sp-val">Apr 25</span>
+          <span class="sp-badge">imported</span>
+        </div>
+        <div class="sp-row">
+          <span class="sp-val sprint-num">S13</span>
+          <span class="sp-val editable" title="click to edit">Apr 28</span>
+          <span class="sp-val">May 16</span>
+          <span class="sp-badge">imported</span>
+        </div>
+        <div class="sp-row">
+          <span class="sp-val sprint-num">S14</span>
+          <span class="sp-val editable" title="click to edit">May 19</span>
+          <span class="sp-val">Jun 6</span>
+          <span class="sp-badge">imported</span>
+        </div>
+        <div class="sp-row">
+          <span class="sp-val sprint-num">S15</span>
+          <span class="sp-val editable" title="click to edit">Jun 9</span>
+          <span class="sp-val">Jun 27</span>
+          <span class="sp-badge manual">generated</span>
+        </div>
+        <div class="more-sprints">+ 5 more sprints · edit in Settings → Sprints after setup</div>
+      </div>
+
+      <div class="ob-actions">
+        <button class="ob-back" onclick="goStep(1)">← back</button>
+        <button class="ob-next" onclick="goStep(3)">looks good →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Confirm -->
+    <div class="ob-card" id="obStep3">
+      <div class="ob-card-title">Ready to build your roadmap</div>
+      <div class="ob-card-sub">Here's what Maestro parsed from your import. Confirm to generate your roadmap.</div>
+
+      <div class="sprint-preview" style="margin-bottom:16px;">
+        <div class="sp-row"><span class="sp-val" style="color:var(--text3);">Epics detected</span><span class="sp-val" style="color:var(--accent);text-align:right;">4</span></div>
+        <div class="sp-row"><span class="sp-val" style="color:var(--text3);">Features detected</span><span class="sp-val" style="color:var(--accent);text-align:right;">10</span></div>
+        <div class="sp-row"><span class="sp-val" style="color:var(--text3);">Sprints configured</span><span class="sp-val" style="color:var(--accent);text-align:right;">9</span></div>
+        <div class="sp-row"><span class="sp-val" style="color:var(--text3);">Sprint length</span><span class="sp-val" style="color:var(--accent);text-align:right;">3 weeks</span></div>
+        <div class="sp-row"><span class="sp-val" style="color:var(--text3);">Items missing dates</span><span class="sp-val" style="color:var(--amber);text-align:right;">2 (flagged)</span></div>
+      </div>
+
+      <div class="ob-actions">
+        <button class="ob-back" onclick="goStep(2)">← back</button>
+        <button class="ob-next primary" onclick="goApp()">build roadmap →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN 2: MAIN APP
+════════════════════════════════ -->
+<div class="screen layout" id="screenApp">
+  <div class="sidebar">
+    <div class="logo" onclick="goApp()">M</div>
+    <button class="nav-btn active" title="Timeline">
+      <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="3" width="13" height="2.5" rx="1"/><rect x="1" y="7.5" width="9" height="2.5" rx="1"/><rect x="1" y="12" width="11" height="2.5" rx="1" opacity="0.5"/></svg>
+    </button>
+    <button class="nav-btn" title="List view">
+      <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.3"><line x1="4" y1="4" x2="13" y2="4"/><line x1="4" y1="7.5" x2="13" y2="7.5"/><line x1="4" y1="11" x2="13" y2="11"/><circle cx="1.5" cy="4" r="0.8" fill="currentColor" stroke="none"/><circle cx="1.5" cy="7.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="1.5" cy="11" r="0.8" fill="currentColor" stroke="none"/></svg>
+    </button>
+    <button class="nav-btn" title="Health dashboard">
+      <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.3"><polyline points="1,11 4,7 7,9 10,4 13,6"/><line x1="1" y1="13" x2="14" y2="13"/></svg>
+    </button>
+    <div class="sidebar-spacer"></div>
+    <button class="nav-btn" title="Settings" onclick="goSettings()">
+      <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7.5" cy="7.5" r="2"/><path d="M7.5 1v1.5M7.5 12.5V14M1 7.5h1.5M12.5 7.5H14M2.6 2.6l1.1 1.1M11.3 11.3l1.1 1.1M11.3 3.7l-1.1 1.1M3.8 11.2l-1.1 1.1"/></svg>
+    </button>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Maestro</span>
+      <span class="topbar-sep">/</span>
+      <span class="topbar-project">Q2 2026 Roadmap</span>
+      <div class="topbar-right">
+        <div class="view-tabs">
+          <button class="vtab active">timeline</button>
+          <button class="vtab">list</button>
+          <button class="vtab">health</button>
+        </div>
+        <button class="import-btn">+ import devops</button>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="row-labels" id="rowLabels">
+        <div class="col-header"><span class="col-header-text">epics / features</span></div>
+        <div class="epic-group" id="eg1">
+          <div class="epic-row-label" onclick="toggleEpic('eg1','gg1')">
+            <svg class="chevron open" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5l3 3 3-3"/></svg>
+            <div class="epic-pill" style="background:#4a7fa5;"></div>
+            <span class="epic-name">Auth &amp; Identity</span>
+          </div>
+          <div class="features-wrap">
+            <div class="feature-row-label" onclick="openDetail('SSO Integration','Feature','Sprint 12','Apr 7','Apr 25','slipped','+7 days')">
+              <div class="feature-dot" style="background:#6ba3cc;"></div><span class="feature-name">SSO Integration</span>
+            </div>
+            <div class="feature-row-label" onclick="openDetail('MFA Enforcement','Feature','Sprint 12–13','Apr 7','May 16','on time','')">
+              <div class="feature-dot" style="background:#6ba3cc;"></div><span class="feature-name">MFA Enforcement</span>
+            </div>
+            <div class="feature-row-label" onclick="openDetail('Session Management','Feature','Sprint 13','Apr 28','May 16','on time','')">
+              <div class="feature-dot" style="background:#6ba3cc;"></div><span class="feature-name">Session Management</span>
+            </div>
+          </div>
+        </div>
+        <div class="epic-group" id="eg2">
+          <div class="epic-row-label" onclick="toggleEpic('eg2','gg2')">
+            <svg class="chevron open" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5l3 3 3-3"/></svg>
+            <div class="epic-pill" style="background:#5a8f6a;"></div>
+            <span class="epic-name">Reporting Suite</span>
+          </div>
+          <div class="features-wrap">
+            <div class="feature-row-label"><div class="feature-dot" style="background:#7ab88a;"></div><span class="feature-name">Export to PDF</span></div>
+            <div class="feature-row-label"><div class="feature-dot" style="background:#7ab88a;"></div><span class="feature-name">Scheduled Reports</span></div>
+          </div>
+        </div>
+        <div class="epic-group" id="eg3">
+          <div class="epic-row-label" onclick="toggleEpic('eg3','gg3')">
+            <svg class="chevron open" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5l3 3 3-3"/></svg>
+            <div class="epic-pill" style="background:#c4614a;"></div>
+            <span class="epic-name">API Gateway</span>
+          </div>
+          <div class="features-wrap">
+            <div class="feature-row-label"><div class="feature-dot" style="background:#e07d66;"></div><span class="feature-name">Rate Limiting</span></div>
+            <div class="feature-row-label"><div class="feature-dot" style="background:#e07d66;"></div><span class="feature-name">Versioning</span></div>
+            <div class="feature-row-label"><div class="feature-dot" style="background:#e07d66;"></div><span class="feature-name">Webhook Events</span></div>
+          </div>
+        </div>
+        <div class="epic-group" id="eg4">
+          <div class="epic-row-label" onclick="toggleEpic('eg4','gg4')">
+            <svg class="chevron closed" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5l3 3 3-3"/></svg>
+            <div class="epic-pill" style="background:#7b6fa0;"></div>
+            <span class="epic-name">Mobile App</span>
+          </div>
+          <div class="features-wrap" style="display:none;">
+            <div class="feature-row-label"><div class="feature-dot" style="background:#a090cc;"></div><span class="feature-name">iOS Shell</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gantt-wrap" id="ganttWrap">
+        <div class="gantt-inner">
+          <div class="sprint-header">
+            <div class="sprint-cell"><span class="sprint-name-label">Sprint 12</span><span class="sprint-date-label">Apr 7 – Apr 25</span></div>
+            <div class="sprint-cell"><span class="sprint-name-label">Sprint 13</span><span class="sprint-date-label">Apr 28 – May 16</span></div>
+            <div class="sprint-cell"><span class="sprint-name-label">Sprint 14</span><span class="sprint-date-label">May 19 – Jun 6</span></div>
+            <div class="sprint-cell"><span class="sprint-name-label">Sprint 15</span><span class="sprint-date-label">Jun 9 – Jun 27</span></div>
+            <div class="sprint-cell"><span class="sprint-name-label">Sprint 16</span><span class="sprint-date-label">Jun 30 – Jul 18</span></div>
+            <div class="sprint-cell"><span class="sprint-name-label">Sprint 17</span><span class="sprint-date-label">Jul 21 – Aug 8</span></div>
+          </div>
+          <div class="gantt-body">
+            <div class="vgrid-line" style="left:130px;"></div>
+            <div class="vgrid-line" style="left:260px;"></div>
+            <div class="vgrid-line" style="left:390px;"></div>
+            <div class="vgrid-line" style="left:520px;"></div>
+            <div class="vgrid-line" style="left:650px;"></div>
+            <div class="today-line" style="left:290px;"><span class="today-pip" style="left:290px;">today</span></div>
+
+            <div class="gantt-epic-group" id="gg1">
+              <div class="gantt-epic-row"><div class="gbar" style="left:8px;width:252px;background:#4a7fa5;" onclick="openDetail('Auth &amp; Identity','Epic','S12–S13','Apr 7','May 16','on time','')"><span class="gbar-label">Auth &amp; Identity</span></div></div>
+              <div class="gantt-feature-row"><div class="fbar" style="left:8px;width:112px;background:#6ba3cc;"></div></div>
+              <div class="gantt-feature-row"><div class="fbar" style="left:8px;width:252px;background:#6ba3cc;"></div></div>
+              <div class="gantt-feature-row"><div class="fbar" style="left:138px;width:122px;background:#6ba3cc;"></div></div>
+            </div>
+            <div class="gantt-epic-group" id="gg2">
+              <div class="gantt-epic-row"><div class="gbar" style="left:138px;width:252px;background:#5a8f6a;" onclick="openDetail('Reporting Suite','Epic','S13–S14','Apr 28','Jun 6','on time','')"><span class="gbar-label">Reporting Suite</span></div></div>
+              <div class="gantt-feature-row"><div class="fbar" style="left:138px;width:122px;background:#7ab88a;"></div></div>
+              <div class="gantt-feature-row"><div class="fbar" style="left:268px;width:122px;background:#7ab88a;"></div></div>
+            </div>
+            <div class="gantt-epic-group" id="gg3">
+              <div class="gantt-epic-row"><div class="gbar" style="left:268px;width:382px;background:#c4614a;" onclick="openDetail('API Gateway','Epic','S14–S16','May 19','Jul 18','+14 days','slipped')"><span class="gbar-label">API Gateway</span></div></div>
+              <div class="gantt-feature-row"><div class="fbar" style="left:268px;width:122px;background:#e07d66;"></div></div>
+              <div class="gantt-feature-row"><div class="fbar" style="left:398px;width:122px;background:#e07d66;"></div></div>
+              <div class="gantt-feature-row">
+                <div class="fbar" style="left:398px;width:252px;background:#e07d66;"></div>
+                <div class="slip-flag" style="left:658px;"><div class="slip-dot"></div><span>slipped</span></div>
+              </div>
+            </div>
+            <div class="gantt-epic-group" id="gg4">
+              <div class="gantt-epic-row"><div class="gbar" style="left:528px;width:200px;background:#7b6fa0;opacity:0.55;"><span class="gbar-label">Mobile App</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="health-panel">
+        <div class="health-header">health</div>
+        <div class="mcard"><div class="mlabel">deadline hit rate</div><div class="mvalue">74<span class="munit">%</span></div><div class="msub">last 4 sprints</div><div class="mtrack"><div class="mfill" style="width:74%;background:#4a7fa5;"></div></div></div>
+        <div class="mcard"><div class="mlabel">sprint load — S14</div><div class="mvalue" style="color:var(--amber);">1.12<span class="munit" style="font-size:11px;">×</span></div><div class="mtrack"><div class="mfill" style="width:100%;background:var(--amber);"></div></div><div><span class="mstatus warn">⚠ overloaded</span></div></div>
+        <div class="mcard"><div class="mlabel">scope creep</div><div class="mvalue" style="color:var(--red);">18<span class="munit">%</span></div><div class="msub">added mid-sprint</div><div class="mtrack"><div class="mfill" style="width:18%;background:var(--red);"></div></div><div><span class="mstatus danger">↑ above threshold</span></div></div>
+        <div class="mcard"><div class="mlabel">slip rate</div><div class="mvalue" style="color:var(--red);">22<span class="munit">%</span></div><div class="msub">dates pushed out</div><div class="mtrack"><div class="mfill" style="width:22%;background:var(--red);"></div></div></div>
+        <div class="mcard"><div class="mlabel">velocity avg</div><div class="mvalue" style="color:var(--green-light);">34<span class="munit" style="font-size:11px;"> pts</span></div><div class="msub">4-sprint rolling avg</div><div class="mtrack"><div class="mfill" style="width:68%;background:var(--green);"></div></div><div><span class="mstatus ok">↑ trending up</span></div></div>
+      </div>
+    </div>
+
+    <div class="statusbar">
+      <div class="sb-item"><div class="sb-dot" style="background:var(--green);"></div>4 epics · 10 features</div>
+      <div class="sb-item"><div class="sb-dot" style="background:var(--amber);"></div>last import: today 09:14</div>
+      <div class="sb-item"><div class="sb-dot" style="background:var(--red);"></div>1 slip detected</div>
+      <div class="sb-item" style="margin-left:auto;">sprint 14 of 17 · 3-week cadence</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN 3: SETTINGS
+════════════════════════════════ -->
+<div class="screen layout" id="screenSettings">
+  <div class="settings-sidebar">
+    <div class="settings-logo" onclick="goApp()">← Maestro</div>
+    <div class="settings-nav-label">general</div>
+    <div class="settings-nav-item" onclick="showSettingsPage('general')">
+      <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="2"/><path d="M6.5 1v1M6.5 11v1M1 6.5h1M11 6.5h1M2.6 2.6l.7.7M9.7 9.7l.7.7M9.7 3.3l-.7.7M3.3 9.7l-.7.7"/></svg>
+      Project
+    </div>
+    <div class="settings-nav-label">planning</div>
+    <div class="settings-nav-item active" onclick="showSettingsPage('sprints')">
+      <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="2" width="11" height="9" rx="1"/><line x1="1" y1="5" x2="12" y2="5"/><line x1="4" y1="2" x2="4" y2="5"/><line x1="9" y1="2" x2="9" y2="5"/></svg>
+      Sprints
+    </div>
+    <div class="settings-nav-item" onclick="showSettingsPage('metrics')">
+      <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><polyline points="1,10 4,6 6.5,8 9,3 12,5"/><line x1="1" y1="12" x2="12" y2="12"/></svg>
+      Metrics
+    </div>
+    <div class="settings-nav-label">data</div>
+    <div class="settings-nav-item" onclick="showSettingsPage('import')">
+      <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M6.5 1v8M4 7l2.5 2.5L9 7"/><path d="M2 10v2h9v-2"/></svg>
+      Import
+    </div>
+  </div>
+
+  <div class="settings-main">
+
+    <!-- General page -->
+    <div class="settings-page" id="settingsGeneral">
+      <div class="settings-title">Project settings</div>
+      <div class="settings-subtitle">Configure your project name and general preferences.</div>
+      <div class="settings-section">
+        <div class="settings-section-title">project</div>
+        <div class="settings-row">
+          <div class="settings-row-left"><div class="settings-row-label">Project name</div><div class="settings-row-desc">Shown in the topbar and exported files.</div></div>
+          <div class="settings-row-right"><input class="settings-input" value="Q2 2026 Roadmap"></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-left"><div class="settings-row-label">Team name</div><div class="settings-row-desc">Displayed in status bar and reports.</div></div>
+          <div class="settings-row-right"><input class="settings-input" value="Platform Team"></div>
+        </div>
+      </div>
+      <div class="settings-footer"><button class="save-btn">save changes</button></div>
+    </div>
+
+    <!-- Sprints page -->
+    <div class="settings-page active" id="settingsSprints">
+      <div class="settings-title">Sprint configuration</div>
+      <div class="settings-subtitle">Manage sprint cadence, start dates, and capacity. Changes here update the Gantt and all health metrics.<br>Original dates are always preserved — adjusting sprints only affects the committed date view.</div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">cadence</div>
+        <div class="settings-row">
+          <div class="settings-row-left"><div class="settings-row-label">Sprint length</div><div class="settings-row-desc">How long each sprint runs. Applied to auto-generated sprints.</div></div>
+          <div class="settings-row-right">
+            <select class="settings-select" onchange="updatePreview()">
+              <option>1 week</option>
+              <option>2 weeks</option>
+              <option selected>3 weeks</option>
+              <option>4 weeks</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-left"><div class="settings-row-label">First sprint start date</div><div class="settings-row-desc">The anchor date all sprint schedules are generated from.</div></div>
+          <div class="settings-row-right"><input type="date" class="settings-input" value="2026-04-07" onchange="updatePreview()"></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-left"><div class="settings-row-label">Snap dates to sprint boundaries</div><div class="settings-row-desc">When adjusting dates on the Gantt, snap to sprint start/end dates automatically.</div></div>
+          <div class="settings-row-right">
+            <div class="toggle-wrap">
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              <span class="toggle-label">enabled</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">sprint schedule</div>
+        <table class="sprint-table">
+          <thead>
+            <tr>
+              <th>Sprint</th>
+              <th>Start date</th>
+              <th>End date</th>
+              <th>Capacity (pts)</th>
+              <th>Source</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sprintTableBody">
+            <tr>
+              <td class="num">S12</td>
+              <td>Apr 7, 2026</td>
+              <td>Apr 25, 2026</td>
+              <td><input class="inline-edit" type="number" value="40" min="0"></td>
+              <td><span class="sp-badge">imported</span></td>
+              <td><span class="edit-icon">✎</span></td>
+            </tr>
+            <tr>
+              <td class="num">S13</td>
+              <td>Apr 28, 2026</td>
+              <td>May 16, 2026</td>
+              <td><input class="inline-edit" type="number" value="42" min="0"></td>
+              <td><span class="sp-badge">imported</span></td>
+              <td><span class="edit-icon">✎</span></td>
+            </tr>
+            <tr>
+              <td class="num active-sprint">S14 ← current</td>
+              <td>May 19, 2026</td>
+              <td>Jun 6, 2026</td>
+              <td><input class="inline-edit" type="number" value="38" min="0" style="border-color:var(--amber)"></td>
+              <td><span class="sp-badge">imported</span></td>
+              <td><span class="edit-icon">✎</span></td>
+            </tr>
+            <tr>
+              <td class="num">S15</td>
+              <td>Jun 9, 2026</td>
+              <td>Jun 27, 2026</td>
+              <td><input class="inline-edit" type="number" value="40" min="0"></td>
+              <td><span class="sp-badge manual">generated</span></td>
+              <td><span class="edit-icon">✎</span></td>
+            </tr>
+            <tr>
+              <td class="num">S16</td>
+              <td>Jun 30, 2026</td>
+              <td>Jul 18, 2026</td>
+              <td><input class="inline-edit" type="number" value="40" min="0"></td>
+              <td><span class="sp-badge manual">generated</span></td>
+              <td><span class="edit-icon">✎</span></td>
+            </tr>
+            <tr>
+              <td class="num">S17</td>
+              <td>Jul 21, 2026</td>
+              <td>Aug 8, 2026</td>
+              <td><input class="inline-edit" type="number" value="40" min="0"></td>
+              <td><span class="sp-badge manual">generated</span></td>
+              <td><span class="edit-icon">✎</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <button class="add-sprint-btn">+ add sprint</button>
+      </div>
+
+      <div class="settings-footer">
+        <button class="danger-btn">reset to import defaults</button>
+        <button class="save-btn">save changes</button>
+      </div>
+    </div>
+
+    <!-- Metrics page -->
+    <div class="settings-page" id="settingsMetrics">
+      <div class="settings-title">Metrics configuration</div>
+      <div class="settings-subtitle">Set thresholds for health indicators. Metrics are flagged when they cross these values.</div>
+      <div class="settings-section">
+        <div class="settings-section-title">thresholds</div>
+        <div class="settings-row">
+          <div class="settings-row-left"><div class="settings-row-label">Sprint load warning</div><div class="settings-row-desc">Flag sprint as overloaded above this ratio of committed pts ÷ capacity.</div></div>
+          <div class="settings-row-right"><input class="settings-input" value="1.0" style="width:80px;"></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-left"><div class="settings-row-label">Scope creep warning</div><div class="settings-row-desc">Flag when features added mid-sprint exceed this percentage.</div></div>
+          <div class="settings-row-right"><input class="settings-input" value="15%" style="width:80px;"></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-left"><div class="settings-row-label">Deadline hit rate target</div><div class="settings-row-desc">Flag when rolling rate falls below this threshold.</div></div>
+          <div class="settings-row-right"><input class="settings-input" value="80%" style="width:80px;"></div>
+        </div>
+      </div>
+      <div class="settings-footer"><button class="save-btn">save changes</button></div>
+    </div>
+
+    <!-- Import page -->
+    <div class="settings-page" id="settingsImport">
+      <div class="settings-title">Import history</div>
+      <div class="settings-subtitle">View past imports and re-import from Azure DevOps.</div>
+      <div class="settings-section">
+        <div class="settings-section-title">last import</div>
+        <div class="settings-row"><div class="settings-row-left"><div class="settings-row-label">File</div></div><div class="settings-row-right" style="font-size:10px;color:var(--text2);">q2-devops-export.csv</div></div>
+        <div class="settings-row"><div class="settings-row-left"><div class="settings-row-label">Imported at</div></div><div class="settings-row-right" style="font-size:10px;color:var(--text2);">May 4, 2026 · 09:14</div></div>
+        <div class="settings-row"><div class="settings-row-left"><div class="settings-row-label">Items parsed</div></div><div class="settings-row-right" style="font-size:10px;color:var(--text2);">4 epics · 10 features</div></div>
+      </div>
+      <div class="settings-footer">
+        <button class="danger-btn">clear all data</button>
+        <button class="save-btn">re-import</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Detail overlay / panel (shared) -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detailPanel">
+  <button class="dp-close" onclick="closeDetail()">✕</button>
+  <div class="dp-type" id="dpType">FEATURE</div>
+  <div class="dp-title" id="dpTitle">SSO Integration</div>
+  <div class="dp-row"><span class="dp-key">Sprint</span><span class="dp-val" id="dpSprint"></span></div>
+  <div class="dp-row"><span class="dp-key">Original end date</span><span class="dp-val original" id="dpOriginal"></span></div>
+  <div class="dp-row"><span class="dp-key">Committed date</span><span class="dp-val committed" id="dpCommitted"></span></div>
+  <div class="dp-row"><span class="dp-key">Status</span><span class="dp-val" id="dpStatus"></span></div>
+  <div id="dpDeltaWrap"></div>
+  <div class="dp-section-title">date audit log</div>
+  <div class="audit-entry"><span class="audit-date">Apr 14, 2026 · 11:02</span><span class="audit-change">Apr 18 → Apr 25 · "blocked on vendor API"</span></div>
+  <div class="audit-entry"><span class="audit-date">Apr 7, 2026 · 09:14</span><span class="audit-change">Initial import — Apr 18</span></div>
+</div>
+
+<script>
+  // ── screen routing ──
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+  function goApp() { showScreen('screenApp'); }
+  function goSettings() { showScreen('screenSettings'); showSettingsPage('sprints'); }
+
+  // ── onboarding ──
+  let manualVisible = false;
+  function toggleManual() {
+    manualVisible = !manualVisible;
+    document.getElementById('manualConfig').style.display = manualVisible ? 'block' : 'none';
+  }
+
+  function goStep(n) {
+    document.querySelectorAll('.ob-card').forEach(c => c.classList.remove('active'));
+    document.getElementById('obStep' + n).classList.add('active');
+    [1,2,3].forEach(i => {
+      const c = document.getElementById('s' + i + 'c');
+      const l = document.getElementById('s' + i + 'l');
+      if (i < n) { c.className='step-circle done'; c.textContent='✓'; l.className='step-label'; }
+      else if (i === n) { c.className='step-circle active'; c.textContent=i; l.className='step-label active'; }
+      else { c.className='step-circle'; c.textContent=i; l.className='step-label'; }
+    });
+  }
+
+  function simulateImport() { goStep(2); }
+
+  // ── settings ──
+  function showSettingsPage(page) {
+    document.querySelectorAll('.settings-page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('settings' + page.charAt(0).toUpperCase() + page.slice(1)).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  // ── epic toggle ──
+  function toggleEpic(labelId, ganttId) {
+    const group = document.getElementById(labelId);
+    const chev = group.querySelector('.chevron');
+    const fw = group.querySelector('.features-wrap');
+    const gg = document.getElementById(ganttId);
+    const isOpen = fw.style.display !== 'none';
+    fw.style.display = isOpen ? 'none' : '';
+    if (gg) gg.querySelectorAll('.gantt-feature-row').forEach(r => r.style.display = isOpen ? 'none' : '');
+    chev.classList.toggle('open', !isOpen);
+    chev.classList.toggle('closed', isOpen);
+  }
+
+  // ── detail panel ──
+  function openDetail(title, type, sprint, original, committed, status, delta) {
+    document.getElementById('dpTitle').textContent = title;
+    document.getElementById('dpType').textContent = type.toUpperCase();
+    document.getElementById('dpSprint').textContent = sprint;
+    document.getElementById('dpOriginal').textContent = original;
+    document.getElementById('dpCommitted').textContent = committed;
+    const s = document.getElementById('dpStatus');
+    s.textContent = status === 'on time' ? '✓ on time' : status;
+    s.className = 'dp-val ' + (status === 'on time' ? 'committed' : 'slipped');
+    document.getElementById('dpDeltaWrap').innerHTML = delta ? '<span class="dp-delta">⚑ slipped ' + delta + '</span>' : '';
+    document.getElementById('detailOverlay').classList.add('open');
+    document.getElementById('detailPanel').classList.add('open');
+  }
+  function closeDetail() {
+    document.getElementById('detailOverlay').classList.remove('open');
+    document.getElementById('detailPanel').classList.remove('open');
+  }
+
+  // ── scroll sync ──
+  const rowLabels = document.getElementById('rowLabels');
+  const ganttWrap = document.getElementById('ganttWrap');
+  if (ganttWrap && rowLabels) {
+    ganttWrap.addEventListener('scroll', () => rowLabels.scrollTop = ganttWrap.scrollTop);
+    rowLabels.addEventListener('scroll', () => ganttWrap.scrollTop = rowLabels.scrollTop);
+  }
+
+  // start on onboarding step 2 (sprints) since that's the most interesting for demo
+  goStep(2);
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "labels": {
+    "289d4141": "Complete the Vazir bootstrap context drafting using the currently selected Pi mo",
+    "07fa49a2": "The user wants to plan their project.\nNo story files are pre-seeded in .context/",
+    "083dd5b5": "The user wants to plan their project.\nNo story files are pre-seeded in .context/",
+    "3530e9b5": "The user wants to plan their project.\nExisting story files already exist in .con",
+    "db38aa7d": "Implement the in-progress story in .context/stories/story-001.md.\n\nYour job:\n1. ",
+    "0086adff": "Implement the in-progress story in .context/stories/story-001.md.\n\nYour job:\n1. ",
+    "81d28887": "how do we visually verify this"
+  }
+}
