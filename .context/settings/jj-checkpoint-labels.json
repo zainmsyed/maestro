@@ -1,5 +1,6 @@
 {
   "labels": {
+    "29689146": "so i was thinking let not ignore the .context folder. that is the point of vazir",
     "289d4141": "Complete the Vazir bootstrap context drafting using the currently selected Pi mo",
     "07fa49a2": "The user wants to plan their project.\nNo story files are pre-seeded in .context/",
     "083dd5b5": "The user wants to plan their project.\nNo story files are pre-seeded in .context/",
@@ -13,6 +14,7 @@
     "85b9de08": "https://github.com/zainmsyed/maestro.git\n\nplease push to main here",
     "8846562e": "are you using the pi-fff by default",
     "93bcf1e9": "can you make sure all the right things are in gitignore",
-    "acc2be21": "yes commit and push that with all the rest"
+    "acc2be21": "yes commit and push that with all the rest",
+    "4d22aa08": "can we add in the system.md if not already there to build a modular application "
   }
 }
