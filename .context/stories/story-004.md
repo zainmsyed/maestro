@@ -1,52 +1,57 @@
-# Story 004: Scaffold Vite + Svelte frontend
+# Story 004: Update REST API for Story entity and date_source
 
-**Status:** not-started  
-**Type:** ui  
-**Created:** 2026-05-06  
-**Last accessed:** 2026-05-06  
+**Status:** not-started
+**Type:** —
+**Created:** 2026-05-06
+**Last accessed:** 2026-05-06
 **Completed:** —
 
 ---
 
 ## Goal
-Initialize a Vite + Svelte SPA project, wire it into the Go backend via `embed.FS`, and serve the built assets from the single binary. Establish the design token system and global layout shell.
+Extend the REST API to support Story CRUD, update Feature endpoints with `date_source` and epic reassignment, update Epic endpoints, add metrics endpoints for story-level calculations, and update date mutation logic to handle PM-assigned original dates and inherited dates.
 
 ## Verification
-Run `cd frontend && npm run build`, then `go build -o maestro ./cmd/maestro` and execute `./maestro`. Open `http://localhost:8080` and see the app shell load with the correct dark theme, fonts (DM Mono, Fraunces), and sidebar navigation.
+Run the API test suite and confirm every endpoint returns correct status codes and payloads. Use `curl` to POST a Story, PATCH a Feature date (verifying `date_source` and audit log), and GET metrics to confirm story-level calculations exclude inherited dates.
 
 ## Scope — files this story may touch
-- `frontend/package.json`
-- `frontend/vite.config.ts`
-- `frontend/tsconfig.json`
-- `frontend/index.html`
-- `frontend/src/main.ts`
-- `frontend/src/App.svelte`
-- `frontend/src/app.css`
-- `frontend/src/lib/api.ts`
-- `frontend/src/stores/*.ts`
-- `cmd/maestro/main.go` (static file serving)
+- `internal/api/server.go`
+- `internal/api/routes.go`
+- `internal/api/stories.go` (new)
+- `internal/api/epics.go`
+- `internal/api/features.go`
+- `internal/api/metrics.go`
+- `internal/api/audit.go`
+- `internal/repository/*.go` (read paths)
+- `internal/models/*.go`
 
 ## Out of scope — do not touch
-- Actual screen components (onboarding, list, gantt, health, settings)
-- API business logic (already built in story-003)
-- Import parser
+- Import parser (already built in story-003)
+- Frontend components
+- File upload UI
+- Authentication or authorization
 
 ## Dependencies
+- story-002
 - story-003
 
 ---
 
 ## Checklist
-- [ ] Initialize Vite project with Svelte and TypeScript (`npm create vite@latest frontend -- --template svelte-ts`)
-- [ ] Configure build output to `frontend/dist`
-- [ ] Add DM Mono and Fraunces font imports in `index.html`
-- [ ] Create CSS custom properties in `app.css` matching mockup tokens (bg, bg2, accent, text, etc.)
-- [ ] Build `App.svelte` with global layout shell: sidebar, main area, status bar slots
-- [ ] Create `api.ts` fetch wrapper with base URL and JSON helpers
-- [ ] Set up basic Svelte stores for `project` and `view`
-- [ ] Update `cmd/maestro/main.go` to serve `frontend/dist` via `embed.FS` on `/`
-- [ ] Add dev proxy config so `npm run dev` can reach the Go API on `:8080`
-- [ ] Verify `go build` produces a binary that serves the frontend correctly
+- [ ] Add Story endpoints: `GET /api/stories`, `GET /api/stories/:id`, `POST /api/stories` (for synthetic/manual), `PATCH /api/stories/:id/date`, `PATCH /api/stories/:id/feature` (reassign)
+- [ ] Update Feature `GET /api/features/:id` to include `date_source` and nested stories
+- [ ] Update Feature `PATCH /api/features/:id/date` to write `date_source` and audit log
+- [ ] Update Epic `GET /api/epics/:id` to include nested features with their nested stories
+- [ ] Update Epic `GET /api/epics` to include full three-level nested structure
+- [ ] Update `PATCH /api/features/:id/date`: if `original_end_date` is NULL (undated item), first assignment sets both `original_end_date` and `committed_end_date` to the new date, `date_source = 'pm_assigned'`, `delta_days = 0`
+- [ ] Update `PATCH /api/stories/:id/date`: same first-assignment logic as Feature
+- [ ] Update `GET /api/metrics` to include story-level Deadline Hit Rate and story-level Scope Creep Rate
+- [ ] Update `GET /api/metrics/slip/:id` to exclude items with `date_source = 'inherited'` from slip calculations
+- [ ] Add `GET /api/metrics/orphaned-stories` endpoint
+- [ ] Update `GET /api/audit` to include `date_source` in relevant responses
+- [ ] Add `GET /api/import/report` endpoint returning the last import report
+- [ ] Write API integration tests covering Story CRUD, first-assignment logic, inherited exclusion, and three-level nesting
+- [ ] Verify three-level nesting in API responses
 
 ---
 

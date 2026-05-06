@@ -1,61 +1,61 @@
-# Story 003: Build REST API for data access and date mutations
+# Story 003: Build prescribed query CSV parser with three-level hierarchy
 
-**Status:** not-started  
-**Type:** —  
-**Created:** 2026-05-06  
-**Last accessed:** 2026-05-06  
+**Status:** not-started
+**Type:** —
+**Created:** 2026-05-06
+**Last accessed:** 2026-05-06
 **Completed:** —
 
 ---
 
 ## Goal
-Implement all REST endpoints defined in the PRD §7.1, including CRUD for epics/features/sprints, date mutations with audit logging, epic reassignment, and health metrics queries.
+Build a CSV parser that reads Azure DevOps "Tree of Work Items" query exports, validates the prescribed column set, normalizes headers, parses Epic → Feature → Story hierarchy via Title 1/2/3, handles Story type variants, detects date formats, generates synthetic IDs for empty Story IDs, and produces an import report with a date-assignment candidate list.
 
 ## Verification
-Run the API test suite and confirm every endpoint returns correct status codes and payloads. Use `curl` or `httpie` to PATCH a feature date and verify a corresponding `DateAuditLog` row is created with accurate `delta_days`.
+Import the test fixture `testdata/tree-export.csv` (containing Epic, Feature, and Story rows with empty IDs and missing Target Dates) and query the database to verify: correct epic count, correct feature count, correct story count, synthetic IDs generated for stories with empty IDs, items with missing Target Date flagged in the import report, orphaned features/stories assigned to synthetic unassigned epic/feature.
 
 ## Scope — files this story may touch
-- `internal/api/server.go`
-- `internal/api/routes.go`
-- `internal/api/epics.go`
-- `internal/api/features.go`
-- `internal/api/sprints.go`
-- `internal/api/metrics.go`
-- `internal/api/audit.go`
-- `internal/api/import.go`
-- `internal/repository/*.go`
+- `internal/importer/*.go`
+- `internal/importer/csv.go`
+- `internal/importer/validation.go`
+- `internal/importer/hierarchy.go`
+- `internal/importer/dates.go`
+- `internal/importer/types.go`
+- `testdata/*.csv`
+- `internal/repository/*.go` (write paths)
 
 ## Out of scope — do not touch
-- Frontend components
-- File upload UI (endpoint accepts multipart; UI comes later)
-- Authentication or authorization
-- Go embed.FS static serving
+- JSON import (removed from POC scope)
+- HTTP upload handlers (parser accepts `io.Reader`)
+- Preview UI or onboarding flow
+- Re-import logic (duplicate handling)
+- Frontend code
 
 ## Dependencies
-- story-001
 - story-002
 
 ---
 
 ## Checklist
-- [ ] Set up HTTP router (chi or stdlib mux) with JSON request/response helpers
-- [ ] `GET /api/epics` — list all epics with nested features
-- [ ] `GET /api/epics/:id` — single epic detail
-- [ ] `GET /api/features` — list all features
-- [ ] `GET /api/features/:id` — single feature detail
-- [ ] `GET /api/sprints` — list all sprints
-- [ ] `POST /api/sprints` — create sprint
-- [ ] `PATCH /api/sprints/:id` — update sprint dates/capacity/name
-- [ ] `PATCH /api/epics/:id/date` — update `committed_end_date`, write audit log
-- [ ] `PATCH /api/features/:id/date` — update `committed_end_date`, write audit log
-- [ ] `PATCH /api/features/:id/epic` — reassign feature to different epic
-- [ ] `GET /api/metrics` — return all health metrics
-- [ ] `GET /api/metrics/slip/:id` — slip event history for a feature
-- [ ] `GET /api/metrics/recoveries` — features with negative net slip days
-- [ ] `GET /api/audit` — date change audit log
-- [ ] Implement `delta_days` as calendar days on every date change
-- [ ] Write API integration tests covering happy paths and errors
-- [ ] Verify audit log entries are created with old date, new date, and delta
+- [ ] Create CSV header normalizer mapping canonical names to internal fields (Title 1→epic_title, Title 2→feature_title, Title 3→story_title, etc.)
+- [ ] Validate required columns present: ID, Work Item Type, Title 1, Title 2, Title 3, State, Assigned To, Iteration Path, Story Points, Target Date, Area Path
+- [ ] Reject non-Tree query exports (detect by requiring Title 1/2/3)
+- [ ] Parse Work Item Type: Epic→epic, Feature→feature, User Story/Product Backlog Item/Requirement→story
+- [ ] Parse hierarchy: Title 1 populated = epic row, Title 2 populated = feature row, Title 3 populated = story row; track current epic/feature pointers
+- [ ] Handle empty Story IDs by generating synthetic UUIDs (`story-{hash}` or `story-{auto}`)
+- [ ] Parse Target Date with format detection (ISO 8601, MM/DD/YYYY, DD/MM/YYYY, ISO slashes, long form, abbreviated, ISO with timezone)
+- [ ] Flag ambiguous dates (day ≤ 12) for confirmation; default to US format per Addendum §6.5
+- [ ] Empty Target Date → `original_end_date = NULL`, add to date-assignment candidate list
+- [ ] Parse Iteration Path: extract last segment as sprint name
+- [ ] Parse Assigned To: extract display name and optional email
+- [ ] Parse Story Points: empty→nil, numeric→int, non-numeric→log warning, nil
+- [ ] Generate synthetic unassigned epic if orphaned features exist
+- [ ] Generate synthetic unassigned feature under unassigned epic if orphaned stories exist
+- [ ] Lock `original_end_date` on import; set `committed_end_date` to same value; set `date_source = 'imported'`
+- [ ] Build import report: counts per type, sprints detected, missing dates count, missing sprint count, orphaned features, orphaned stories, skipped rows, detected date format
+- [ ] Create test fixtures: `testdata/tree-export-v1.csv` with varied date formats, empty IDs, orphaned items
+- [ ] Write unit tests for header normalization, hierarchy parsing, date detection, type normalization
+- [ ] Run import against test fixture and verify record counts, field values, and synthetic ID generation
 
 ---
 

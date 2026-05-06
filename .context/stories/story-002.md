@@ -1,35 +1,35 @@
-# Story 002: Build Azure DevOps import parser
+# Story 002: Update SQLite schema for Story entity and date_source
 
-**Status:** in-progress  
-**Type:** —  
-**Created:** 2026-05-06  
-**Last accessed:** 2026-05-06  
+**Status:** not-started
+**Type:** —
+**Created:** 2026-05-06
+**Last accessed:** 2026-05-06
 **Completed:** —
 
 ---
 
 ## Goal
-Build a parser that reads Azure DevOps CSV and JSON exports, maps fields to the Maestro data model, handles date format variance, infers Epic → Feature hierarchy, and assigns orphaned features to a synthetic "Unassigned" Epic.
+Extend the existing SQLite schema to support the three-level hierarchy by adding a Story table, adding `date_source` to Feature and Story, and updating the repository layer and tests.
 
 ## Verification
-Import the synthetic test fixtures (`testdata/export-v1.csv`, `testdata/export-v2.json`) and query the database to verify: 4 epics, 10 features, 1 synthetic epic, 9 sprints, all dates parsed correctly regardless of input format.
+Run `go test ./...` and see all tests pass. Inspect `maestro.db` schema and confirm: `stories` table exists, `features` has `date_source`, `stories` has `date_source`, synthetic unassigned feature support is in place.
 
 ## Scope — files this story may touch
-- `internal/importer/*.go`
-- `internal/importer/csv.go`
-- `internal/importer/json.go`
-- `internal/importer/dates.go`
-- `internal/importer/hierarchy.go`
-- `testdata/*.csv`, `testdata/*.json`
-- `internal/repository/epic.go`
+- `internal/db/schema.sql`
+- `internal/db/db.go` (migration)
+- `internal/models/story.go` (new)
+- `internal/models/feature.go`
+- `internal/models/epic.go` (verify no date_source needed)
+- `internal/repository/story.go` (new)
 - `internal/repository/feature.go`
-- `internal/repository/sprint.go`
+- `internal/repository/repository.go`
+- `internal/repository/repository_test.go`
 
 ## Out of scope — do not touch
-- HTTP upload handlers (parser accepts `io.Reader`)
-- Preview UI or onboarding flow
-- Re-import logic (duplicate handling)
+- HTTP handlers or routing
+- Import parser logic
 - Frontend code
+- Existing Epic repository (no schema change)
 
 ## Dependencies
 - story-001
@@ -37,16 +37,19 @@ Import the synthetic test fixtures (`testdata/export-v1.csv`, `testdata/export-v
 ---
 
 ## Checklist
-- [ ] Create CSV reader that handles standard Azure DevOps export columns
-- [ ] Create JSON reader for Azure DevOps JSON export shape
-- [ ] Implement date parser supporting `MM/DD/YYYY`, `YYYY-MM-DD`, `DD/MM/YYYY`, and ISO 8601 with timezone offsets
-- [ ] Map Work Item Type to Epic or Feature; map Parent field to `epic_id`
-- [ ] Build hierarchy inference: Features without parent → synthetic Epic (`is_synthetic = true`, title "Unassigned")
-- [ ] Extract sprint data and create Sprint records with `source = imported`
-- [ ] Lock `original_end_date` on import and set `committed_end_date` to the same value
-- [ ] Create test fixtures with varied date formats and orphaned features
-- [ ] Write unit tests for each parser format and edge case
-- [ ] Run import against test fixtures and verify record counts and field values
+- [ ] Add `stories` table to `schema.sql` matching Addendum §4 (id, feature_id, title, description, status, owner, sprint, story_points, original_end_date, committed_end_date, actual_end_date, date_source, created_at, updated_at)
+- [ ] Add `date_source TEXT NOT NULL DEFAULT 'imported'` to `features` table
+- [ ] Add `date_source TEXT NOT NULL DEFAULT 'imported'` to `stories` table
+- [ ] Add `idx_stories_feature_id` index
+- [ ] Add `idx_stories_sprint` index
+- [ ] Create `internal/models/story.go` with `Story` struct
+- [ ] Update `internal/models/feature.go` with `DateSource` field
+- [ ] Create `internal/repository/story.go` with CRUD interface and SQLite implementation
+- [ ] Update `internal/repository/feature.go` to scan and write `DateSource`
+- [ ] Update `internal/repository/repository.go` to include `Stories`
+- [ ] Update `internal/repository/repository_test.go` with Story CRUD tests and date_source round-trip tests
+- [ ] Verify `go test ./...` passes
+- [ ] Verify schema with `sqlite3 maestro.db ".schema"`
 
 ---
 

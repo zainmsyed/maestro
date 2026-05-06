@@ -1,51 +1,51 @@
-# Story 006: List view with inline editing and CSV export
+# Story 006: Build post-import date assignment screen
 
-**Status:** not-started  
-**Type:** ui  
-**Created:** 2026-05-06  
-**Last accessed:** 2026-05-06  
+**Status:** not-started
+**Type:** ui
+**Created:** 2026-05-06
+**Last accessed:** 2026-05-06
 **Completed:** —
 
 ---
 
 ## Goal
-Build the List view as a rich data table: display epics and features, inline edit committed dates, sort and filter by any column, group by Epic/Sprint/Owner, reassign orphaned features, and export the current view to CSV.
+Build the post-import date assignment screen that appears after CSV import when items have missing Target Dates. The PM can assign dates inline with sprint-boundary snap, skip for later, or set all at once. The first assigned date becomes the locked `original_end_date`.
 
 ## Verification
-Open the List view with test data. Edit a feature's committed date inline and refresh to confirm it persisted. Sort by Owner, filter to Status = Active, group by Sprint, reassign an orphaned feature to a real epic, and export the filtered view to CSV.
+Run an import with a fixture containing items missing Target Dates. After the sprint review step, verify the date assignment screen appears with the correct items listed. Assign dates to two items, skip one, click continue, and verify in the database that assigned items have `original_end_date` and `committed_end_date` set with `date_source = 'pm_assigned'`, and skipped items remain with NULL dates.
 
 ## Scope — files this story may touch
-- `frontend/src/screens/ListView.svelte`
-- `frontend/src/components/DataTable.svelte`
+- `frontend/src/screens/DateAssignment.svelte` (new)
+- `frontend/src/components/DateAssignmentRow.svelte` (new)
 - `frontend/src/components/DatePicker.svelte`
-- `frontend/src/components/FilterBar.svelte`
-- `frontend/src/components/GroupBySelect.svelte`
-- `frontend/src/lib/csvExport.ts`
+- `frontend/src/screens/Onboarding.svelte`
 - `frontend/src/lib/api.ts`
+- `frontend/src/stores/project.ts`
 
 ## Out of scope — do not touch
-- Gantt view
-- Health dashboard
-- Detail panel (used in Gantt; List uses inline cells)
+- Import parser (already built)
+- Sprint configuration screen (story-007)
+- Gantt or List views
 - Settings screens
 
 ## Dependencies
 - story-003
-- story-004
+- story-005
 
 ---
 
 ## Checklist
-- [ ] Create `ListView.svelte` screen shell with topbar integration
-- [ ] Build `DataTable.svelte` with fixed header and scrollable body
-- [ ] Columns: Title, Type, Owner, Sprint, Original Date, Committed Date, Actual Date, Slip Events, Status, Health indicator
-- [ ] Implement inline date editing in Committed Date cells via `DatePicker.svelte`
-- [ ] Add sort toggles on every column header
-- [ ] Build `FilterBar.svelte` with dropdowns for Epic, Owner, Sprint, Status
-- [ ] Implement group-by: Epic (default), Sprint, Owner
-- [ ] Show orphaned features under "Unassigned" group with reassignment dropdown
-- [ ] Add "Export CSV" button that exports the current filtered/sorted/grouped view
-- [ ] Handle empty states and loading states
+- [ ] Create `DateAssignment.svelte` screen showing items missing Target Date with count header
+- [ ] Each row shows: checkbox (select for batch), item title, type (Epic/Feature/Story), sprint name, date picker
+- [ ] Date picker snaps to sprint boundaries by default (toggle per row)
+- [ ] "Set all selected" button assigns dates to all checked items
+- [ ] "Skip — I'll do it later" button continues to confirmation without assigning
+- [ ] "Set dates now" button assigns dates and continues
+- [ ] Call PATCH endpoints for each assigned item; first assignment sets both `original_end_date` and `committed_end_date`
+- [ ] Show progress/success state after batch assignment
+- [ ] Wire `Onboarding.svelte` to show `DateAssignment` between sprint review and confirmation when `missing_dates > 0`
+- [ ] Handle empty state (all items have dates → skip screen automatically)
+- [ ] Handle errors gracefully (network failure, invalid date)
 
 ---
 

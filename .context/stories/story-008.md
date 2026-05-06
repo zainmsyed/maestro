@@ -1,49 +1,51 @@
-# Story 008: Gantt drag interactions and detail panel
+# Story 008: List view with inline editing and CSV export
 
-**Status:** not-started  
-**Type:** ui  
-**Created:** 2026-05-06  
-**Last accessed:** 2026-05-06  
+**Status:** not-started
+**Type:** ui
+**Created:** 2026-05-06
+**Last accessed:** 2026-05-06
 **Completed:** —
 
 ---
 
 ## Goal
-Make the Gantt interactive: drag bars to shift dates, drag edges to extend end dates, click bars to open a detail panel showing original/committed dates, slip events, audit log, and a snap-to-sprint toggle.
+Build the List view as a rich data table: display epics and features, inline edit committed dates, sort and filter by any column, group by Epic/Sprint/Owner, reassign orphaned features, and export the current view to CSV.
 
 ## Verification
-In the Gantt view, drag an epic bar to the right and verify the committed date updates via API. Drag the right edge of a feature bar to extend it. Click a bar and verify the detail panel slides in showing original date (strikethrough), committed date, status, and audit history. Toggle snap-to-sprint and drag again to verify snapping behavior.
+Open the List view with test data. Edit a feature's committed date inline and refresh to confirm it persisted. Sort by Owner, filter to Status = Active, group by Sprint, reassign an orphaned feature to a real epic, and export the filtered view to CSV.
 
 ## Scope — files this story may touch
-- `frontend/src/components/GanttBar.svelte`
-- `frontend/src/components/FeatureBar.svelte`
-- `frontend/src/components/DetailPanel.svelte`
-- `frontend/src/components/SnapToggle.svelte`
-- `frontend/src/lib/dragEngine.ts`
+- `frontend/src/screens/ListView.svelte`
+- `frontend/src/components/DataTable.svelte`
+- `frontend/src/components/DatePicker.svelte`
+- `frontend/src/components/FilterBar.svelte`
+- `frontend/src/components/GroupBySelect.svelte`
+- `frontend/src/lib/csvExport.ts`
 - `frontend/src/lib/api.ts`
-- `frontend/src/stores/ui.ts`
 
 ## Out of scope — do not touch
-- Virtualization (still render all rows)
-- Settings screen for snap toggle default (just local state for now)
+- Gantt view
 - Health dashboard
+- Detail panel (used in Gantt; List uses inline cells)
+- Settings screens
 
 ## Dependencies
-- story-007
+- story-004
+- story-005
 
 ---
 
 ## Checklist
-- [ ] Implement drag engine in `dragEngine.ts`: pointer down → track delta → pointer up → compute new date
-- [ ] Add drag-to-shift on bar body (updates `committed_end_date` only)
-- [ ] Add drag-to-resize on bar right edge (extends `committed_end_date`)
-- [ ] Build `DetailPanel.svelte` slide-out overlay with fixed positioning
-- [ ] Detail panel fields: type, title, sprint, original date (strikethrough), committed date, status, slip delta
-- [ ] Show date audit log entries in detail panel (newest first)
-- [ ] Build `SnapToggle.svelte` component (default: on)
-- [ ] When snap is enabled, round dragged dates to nearest sprint boundary
-- [ ] Call PATCH endpoints on drag end and update local store optimistically
-- [ ] Handle drag cancellation (Esc key or mouse leave)
+- [ ] Create `ListView.svelte` screen shell with topbar integration
+- [ ] Build `DataTable.svelte` with fixed header and scrollable body
+- [ ] Columns: Title, Type, Owner, Sprint, Original Date, Committed Date, Actual Date, Slip Events, Status, Health indicator
+- [ ] Implement inline date editing in Committed Date cells via `DatePicker.svelte`
+- [ ] Add sort toggles on every column header
+- [ ] Build `FilterBar.svelte` with dropdowns for Epic, Owner, Sprint, Status
+- [ ] Implement group-by: Epic (default), Sprint, Owner
+- [ ] Show orphaned features under "Unassigned" group with reassignment dropdown
+- [ ] Add "Export CSV" button that exports the current filtered/sorted/grouped view
+- [ ] Handle empty states and loading states
 
 ---
 

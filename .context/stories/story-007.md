@@ -1,52 +1,47 @@
-# Story 007: Gantt timeline core rendering
+# Story 007: Onboarding flow
 
-**Status:** not-started  
-**Type:** ui  
-**Created:** 2026-05-06  
-**Last accessed:** 2026-05-06  
+**Status:** not-started
+**Type:** ui
+**Created:** 2026-05-06
+**Last accessed:** 2026-05-06
 **Completed:** —
 
 ---
 
 ## Goal
-Render the primary Gantt view: sprint headers on the X-axis, epic rows with expandable feature rows on the Y-axis, bars positioned by sprint dates with status colors, today line, and the synthetic "Unassigned" Epic at the bottom.
+Build the multi-step onboarding screen: file drop/picker, import preview, sprint review table, manual sprint config fallback, and confirmation before entering the app.
 
 ## Verification
-Navigate to the Timeline view. Verify all epics and features render as bars aligned to the correct sprint columns. Expand/collapse an epic. Confirm the "Unassigned" epic appears at the bottom in muted styling. Confirm the today line is visible.
+Launch the app with an empty database. Drop a test CSV onto the onboarding screen, proceed through sprint review, click "build roadmap," and land on the List view with imported data visible.
 
 ## Scope — files this story may touch
-- `frontend/src/screens/GanttView.svelte`
-- `frontend/src/components/GanttGrid.svelte`
-- `frontend/src/components/RowLabels.svelte`
-- `frontend/src/components/SprintHeader.svelte`
-- `frontend/src/components/GanttBar.svelte`
-- `frontend/src/components/TodayLine.svelte`
-- `frontend/src/lib/ganttLayout.ts`
+- `frontend/src/screens/Onboarding.svelte`
+- `frontend/src/components/DropZone.svelte`
+- `frontend/src/components/SprintPreview.svelte`
+- `frontend/src/components/StepBar.svelte`
+- `frontend/src/lib/api.ts`
+- `frontend/src/stores/project.ts`
 
 ## Out of scope — do not touch
-- Drag interactions (click only for now)
-- Detail panel slide-out
-- Virtualization (render all rows)
-- Zoom controls
+- List view implementation (just navigate to it after onboarding)
+- Re-import logic from inside the app (Settings → Import comes later)
+- Gantt or Health screens
 
 ## Dependencies
-- story-003
 - story-004
+- story-005
 
 ---
 
 ## Checklist
-- [ ] Create `GanttView.svelte` screen shell with topbar view-tabs integration
-- [ ] Build `SprintHeader.svelte` row showing sprint names and date ranges
-- [ ] Build `RowLabels.svelte` panel with epic rows and nested feature rows, expand/collapse chevrons
-- [ ] Implement `GanttGrid.svelte` with vertical grid lines per sprint
-- [ ] Create `GanttBar.svelte` for epics and `FeatureBar.svelte` for features
-- [ ] Position bars using sprint start date fallback chain (sprint start → sprint end → import date)
-- [ ] Apply status colors: grey (not started), blue (in progress), green (completed on time), red (missed)
-- [ ] Render synthetic "Unassigned" Epic at bottom with muted styling (italic, no color pill)
-- [ ] Add `TodayLine.svelte` vertical marker with "today" pip
-- [ ] Sync scroll between `RowLabels` and `GanttGrid` containers
-- [ ] Add zoom level state (sprint / month / quarter) with basic CSS scaling
+- [ ] Create `Onboarding.svelte` with 3-step state machine (Import → Sprints → Confirm)
+- [ ] Build `DropZone.svelte` with drag-and-drop and file picker fallback
+- [ ] POST file to `/api/import` and display preview counts (epics, features, sprints, missing dates, orphans)
+- [ ] Build `SprintPreview.svelte` table showing imported/generated sprints with editable start dates
+- [ ] Add manual config toggle with sprint length, first start date, and count inputs
+- [ ] Show confirmation summary card before finalizing
+- [ ] Wire "build roadmap" to create project and route to List view
+- [ ] Handle import errors with inline messages (malformed rows, unsupported format)
 
 ---
 

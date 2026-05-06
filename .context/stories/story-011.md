@@ -1,52 +1,56 @@
-# Story 011: Settings screens
+# Story 011: Update Gantt for three-level nesting and stub bars
 
-**Status:** not-started  
-**Type:** ui  
-**Created:** 2026-05-06  
-**Last accessed:** 2026-05-06  
+**Status:** not-started
+**Type:** ui
+**Created:** 2026-05-06
+**Last accessed:** 2026-05-06
 **Completed:** —
 
 ---
 
 ## Goal
-Build the Settings screen with sidebar navigation, project configuration, sprint management table with inline capacity editing, metrics thresholds, and import history with re-import and clear-data actions.
+Update the Gantt view to render three-level nesting (Epic → Feature → Story), show stub bars for undated items, make Stories collapsed by default, and handle click-to-assign on stub bars.
 
 ## Verification
-Open Settings → Sprints and edit a sprint's capacity inline. Refresh the page and confirm the value persisted. Navigate to Settings → Metrics and change the scope creep threshold to 20%. Return to the Health dashboard and confirm the warning boundary shifted.
+Open the Gantt view with test data containing epics, features, and stories at various nesting levels. Verify Stories are collapsed by default, expanding a Feature shows its Stories, undated Stories render as stub bars with ⚠ indicator, clicking a stub opens the detail panel with date picker, and dated Stories render as thin bars (8px).
 
 ## Scope — files this story may touch
-- `frontend/src/screens/SettingsView.svelte`
-- `frontend/src/components/SettingsNav.svelte`
-- `frontend/src/components/SprintTable.svelte`
-- `frontend/src/components/MetricsThresholds.svelte`
-- `frontend/src/components/ImportHistory.svelte`
-- `frontend/src/lib/api.ts`
-- `frontend/src/stores/settings.ts`
+- `frontend/src/screens/GanttView.svelte`
+- `frontend/src/components/GanttGrid.svelte`
+- `frontend/src/components/RowLabels.svelte`
+- `frontend/src/components/GanttBar.svelte`
+- `frontend/src/components/FeatureBar.svelte`
+- `frontend/src/components/StoryBar.svelte` (new)
+- `frontend/src/components/StubBar.svelte` (new)
+- `frontend/src/components/DetailPanel.svelte`
+- `frontend/src/lib/ganttLayout.ts`
 
 ## Out of scope — do not touch
-- Auth or user management
-- Multi-project switching
-- External integrations beyond re-import
+- List view
+- Health dashboard
+- Settings screens
+- Onboarding flow
+- Drag engine (story-012 handles drag; this story focuses on rendering)
 
 ## Dependencies
-- story-003
 - story-004
 - story-010
 
 ---
 
 ## Checklist
-- [ ] Create `SettingsView.svelte` with sidebar nav and page content area
-- [ ] Project settings page: project name, team name inputs with save
-- [ ] Sprints page: full sprint table with inline capacity editing
-- [ ] Add "+ add sprint" button with manual creation form
-- [ ] Snap-to-sprint toggle with persistence
-- [ ] "Reset to import defaults" button with confirmation dialog
-- [ ] Metrics thresholds page: sprint load warning, scope creep warning, deadline hit rate target
-- [ ] Import history page: last import file, timestamp, item counts
-- [ ] Re-import button that routes to onboarding
-- [ ] "Clear all data" danger button with confirmation
-- [ ] Ensure all changes call the appropriate PATCH/POST APIs
+- [ ] Update `RowLabels.svelte` to support three levels: Epic rows, Feature rows (indented under epics), Story rows (indented under features)
+- [ ] Stories default to collapsed under Features; expand/collapse chevron on Feature rows
+- [ ] Update `GanttGrid.svelte` to render Story rows with thin bars (8px height)
+- [ ] Create `StoryBar.svelte` for dated Stories
+- [ ] Create `StubBar.svelte` for undated Stories: minimal bar at sprint start position with ⚠ indicator and lighter opacity
+- [ ] Clicking a stub bar opens `DetailPanel.svelte` with date picker
+- [ ] After assigning a date, stub becomes a full `StoryBar`
+- [ ] Story bars are not draggable until a date is assigned
+- [ ] Update `GanttBar.svelte` for Epics (22px) and `FeatureBar.svelte` for Features (10px)
+- [ ] Update `ganttLayout.ts` to handle three-level row heights and offsets
+- [ ] Update scroll sync and virtualization for three levels
+- [ ] Verify synthetic unassigned epic and feature rows render in muted styling at the bottom
 
 ---
 

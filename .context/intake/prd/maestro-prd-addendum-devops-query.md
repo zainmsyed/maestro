@@ -1,7 +1,7 @@
-# Maestro — PRD Addendum: Prescribed Azure DevOps Query + Stories Support
+# Maestro — PRD Addendum: Prescribed Azure DevOps Query + Parser Specification
 
 **Addendum to:** maestro-prd.md v0.3
-**Version:** 1.1
+**Version:** 2.0
 **Status:** Draft
 **Last Updated:** 2026-05-06
 
@@ -11,72 +11,112 @@
 
 | Version | Changes |
 |---|---|
-| 1.1 | Added Story as a first-class entity (third hierarchy level). Added `Title 3` column to prescribed query. Added Story data model. Defined Story type name variants across process templates. Added PM date insertion for items missing Target Date — Epics, Features, and Stories can all have dates set directly in Maestro without going back to DevOps. Updated parser for three-level hierarchy. Updated Gantt and List view specs for three-level nesting. |
-| 1.0 | Initial addendum — prescribed query, parser spec, common problems |
+| 2.0 | Complete rewrite based on analysis of three real Azure DevOps CSV exports. Parent ID established as the sole hierarchy signal. Title column inference removed entirely. Parser rebuilt around real-world variance: float Parent IDs, 2–5 title columns, datetime Target Date format, multi-segment Iteration Path, Assigned To name format variants, Blocked state, missing Story Points. Query installer flow added. JSON import removed from scope. |
+| 1.1 | Added Story as third hierarchy level. Added PM date insertion. |
+| 1.0 | Initial addendum — prescribed query, parser spec, common problems. |
 
 ---
 
 ## Purpose
 
-This addendum defines the prescribed Azure DevOps query that PMs must create before using Maestro, and specifies how Stories are handled as a third hierarchy level beneath Features. It also defines the PM date insertion workflow for work items that have no Target Date in DevOps.
+This addendum defines the prescribed Azure DevOps query PMs must run before using Maestro, and specifies exactly how the Go parser handles real-world CSV export variance. It supersedes the import schema mapping in PRD §4.2.
 
-By standardizing the query structure and column set, Maestro can parse a consistent, predictable CSV every time — eliminating the column variance risk identified in the PRD risk register.
-
-The PM sets this up once. After that, running and exporting the query takes under a minute.
+The approach is built on one principle validated across three real exports: **`Parent` ID is the only reliable hierarchy signal.** Everything else — title columns, row order, column count — varies unpredictably across teams. The parser ignores title structure entirely and reconstructs hierarchy purely from the `Parent` foreign key.
 
 ---
 
-## Background: Why a Prescribed Query
+## Section 1: What the Parser Relies On
 
-Azure DevOps CSV exports only include columns that were explicitly added to the query before exporting. There is no default export format that includes all the fields Maestro needs. Without a prescribed query, every PM would export a different set of columns, making a reliable parser impossible.
+Before anything else, this is the full picture of what Maestro can and cannot count on from a real DevOps export.
 
-Additionally, the parent-child hierarchy between Epics, Features, and Stories is only preserved in a specific query type. A flat list query flattens hierarchy entirely. Only a **Tree of Work Items** query encodes parent-child relationships in the exported CSV via indented title columns (`Title 1`, `Title 2`, `Title 3`), which is the structure Maestro's parser is built to read.
+### Reliable — Parser Can Depend On These
+
+| Field | Why Reliable |
+|---|---|
+| `ID` | Always present; primary key |
+| `Work Item Type` | Always present; determines Epic / Feature / Story |
+| `Parent` | Empty for Epics, populated for Features and Stories; clean foreign key regardless of team structure |
+| `State` | Always present; values vary but field is always there |
+
+### Soft-Reliable — Present in Most Exports, Handle Absence Gracefully
+
+| Field | Variance | Fallback |
+|---|---|---|
+| `Iteration Path` | Always present but segment depth varies (2–5 segments); `Backlog` and `Archive` appear as non-sprint values | `NULL` sprint → item flagged as unscheduled |
+| `Target Date` | Format varies (`YYYY-MM-DD`, `MM/DD/YYYY`, `MM/DD/YYYY HH:MM:SS AM/PM`); often empty on Features and Epics | `NULL` → post-import date assignment screen |
+| `Assigned To` | Format varies (`First Last <email>` vs `Last, First <email>`); sometimes email only | Parse best effort; `NULL` is valid |
+| Title columns | Count varies (1–5+); titles may appear in any column; unreliable for hierarchy | Scan all title columns; take last non-empty value as display title |
+
+### Unreliable — Do Not Depend On
+
+| Field | Reality |
+|---|---|
+| `Story Points` | Missing in majority of real exports; many teams use hours, t-shirt sizes, or nothing |
+| `Area Path` | Segment depth varies; used for filtering only, never for hierarchy or metrics |
+| Title column position | No consistent mapping between column index and hierarchy level |
+| `Description`, `Tags`, `Priority` | Not in prescribed query; too variable to parse reliably |
 
 ---
 
-## Section 1: Hierarchy Model
+## Section 2: Required vs Optional Columns
 
-Maestro supports three levels of work item hierarchy:
+### Absolute Required (Import Rejected Without These)
 
 ```
-Epic
-└── Feature
-    └── Story
+Parent
+ID
+Work Item Type
 ```
 
-| Level | Azure DevOps Type (Agile) | Azure DevOps Type (Scrum) | Azure DevOps Type (CMMI) |
-|---|---|---|---|
-| Epic | Epic | Epic | Epic |
-| Feature | Feature | Feature | Feature |
-| Story | User Story | Product Backlog Item | Requirement |
+These three are the skeleton. Without them the parser cannot create entities or link them.
 
-> **Key difference from Epic and Feature:** Epic and Feature type names are consistent across all process templates. Story type names vary. The prescribed query and parser must account for all three variants. When Maestro encounters any of `User Story`, `Product Backlog Item`, or `Requirement` in the `Work Item Type` column, it treats that row as a Story.
+### Strongly Recommended (Import Proceeds With Warnings If Missing)
+
+```
+[Any title column]   → display names; fallback to "Untitled {Type} {ID}"
+Iteration Path       → sprint placement; missing = all items unscheduled
+Target Date          → bar end dates; missing = date assignment screen
+State                → health metrics; missing = all items treated as "New"
+Assigned To          → ownership display; missing = "Unassigned"
+```
+
+### Optional (Enrichment Only)
+
+```
+Area Path            → List view filter dimension only
+Story Points         → Sprint Load Index; permanently shows "—" if absent
+```
 
 ---
 
-## Section 2: One-Time Setup Guide
+## Section 3: One-Time Query Setup Guide
 
-### Step 1 — Navigate to Queries
+### Option A — Automatic Install (Recommended)
 
-In your Azure DevOps project, go to:
+On the Maestro onboarding screen, enter:
+- Azure DevOps org URL (e.g. `https://dev.azure.com/myorg`)
+- Project name
+- Personal Access Token (PAT) with **Work Items (Read)** scope
+
+Maestro calls the Azure DevOps REST API to create the "Maestro Export" query directly in your Shared Queries folder. The PM never touches the query editor.
+
+If the API call fails (org restrictions, insufficient PAT permissions), Maestro falls back to Option B and shows the manual setup guide.
+
+---
+
+### Option B — Manual Setup
+
+**Step 1 — Navigate to Queries**
 
 **Boards → Queries → New Query**
 
----
+**Step 2 — Set Query Type**
 
-### Step 2 — Set Query Type
-
-In the Query Editor, change the **Type of query** dropdown from the default ("Flat list of work items") to:
+Change the type dropdown to:
 
 > **Tree of work items**
 
-This is essential. It generates the `Title 1` / `Title 2` / `Title 3` column structure that encodes Epic → Feature → Story hierarchy in the CSV export.
-
----
-
-### Step 3 — Set Filters
-
-Configure the query clauses as follows. Use **Or** between the three type rows:
+**Step 3 — Set Filters**
 
 | And/Or | Field | Operator | Value |
 |---|---|---|---|
@@ -86,238 +126,130 @@ Configure the query clauses as follows. Use **Or** between the three type rows:
 
 > **Scrum teams:** Replace `User Story` with `Product Backlog Item`
 > **CMMI teams:** Replace `User Story` with `Requirement`
-> **Custom process templates:** Use whatever type sits below Feature in your hierarchy
+> **Custom templates:** Use the type name that sits below Feature in your hierarchy
 
-Set the link type to **Child Of** between each level.
+Set link type to **Child Of** between levels.
 
----
+**Step 4 — Add Required Columns**
 
-### Step 4 — Add Required Columns
+Click **Column Options** and add in this order:
 
-Click **Column Options**. Add the following columns in this order:
-
-| # | Column name | Why it's needed |
+| # | Column | Required? |
 |---|---|---|
-| 1 | ID | Unique identifier for each work item |
-| 2 | Work Item Type | Distinguishes Epics, Features, and Stories |
-| 3 | Title 1 | Epic title |
-| 4 | Title 2 | Feature title |
-| 5 | Title 3 | Story title |
-| 6 | State | Work item status |
-| 7 | Assigned To | Owner |
-| 8 | Iteration Path | Sprint assignment |
-| 9 | Story Points | Effort estimate |
-| 10 | Target Date | Planned completion date — may be empty; PMs can set this in Maestro |
-| 11 | Area Path | Team/area context |
+| 1 | Parent | ✓ Required |
+| 2 | ID | ✓ Required |
+| 3 | Work Item Type | ✓ Required |
+| 4 | Title 1 | Recommended |
+| 5 | Title 2 | Recommended |
+| 6 | Title 3 | Recommended |
+| 7 | State | Recommended |
+| 8 | Assigned To | Recommended |
+| 9 | Iteration Path | Recommended |
+| 10 | Story Points | Optional |
+| 11 | Target Date | Recommended |
+| 12 | Area Path | Optional |
 
-> **On Target Date:** It is expected and normal that many Stories — and some Features — will not have a Target Date set in Azure DevOps. This is not an error. Maestro surfaces these items after import and lets the PM assign dates directly, without going back to DevOps.
+> **On title columns:** Add as many title columns as your hierarchy depth requires. Maestro scans all of them and takes the last non-empty value as the display title regardless of which column it appears in. If your team has 5 levels, add Title 1 through Title 5.
 
----
+**Step 5 — Save the Query**
 
-### Step 5 — Save the Query
+Save as **"Maestro Export"** to **Shared Queries**.
 
-Save the query as:
+**Step 6 — Export to CSV**
 
-> **Maestro Export**
-
-Save to **Shared Queries** so any PM on the team can run it.
-
----
-
-### Step 6 — Export to CSV
-
-Every time you want to update your Maestro roadmap:
-
-1. Open **Boards → Queries → Shared Queries → Maestro Export**
+Every subsequent import:
+1. **Boards → Queries → Shared Queries → Maestro Export**
 2. Run the query
-3. Click the **⋯ actions menu** (top right of results)
-4. Select **Export to CSV**
-5. Save the file
-6. Open Maestro and drag the file onto the import screen
+3. **⋯ → Export to CSV**
+4. Drag the file into Maestro
 
-Steps 1–5 are one-time setup. Only step 6 repeats.
+Steps 1–5 are one-time. Only step 6 repeats.
 
 ---
 
-## Section 3: What the CSV Looks Like
+## Section 4: WIQL Definition
 
-A correctly configured export produces a CSV with this structure:
+This is the exact query Maestro installs via the API in Option A, and what the manual setup produces in Option B.
 
+```sql
+SELECT
+  [System.Id],
+  [System.Parent],
+  [System.WorkItemType],
+  [System.Title],
+  [System.State],
+  [System.AssignedTo],
+  [System.AreaPath],
+  [System.IterationPath],
+  [Microsoft.VSTS.Scheduling.StoryPoints],
+  [Microsoft.VSTS.Scheduling.TargetDate]
+FROM workItemLinks
+WHERE
+  (
+    [Source].[System.WorkItemType] IN ('Epic', 'Feature', 'User Story',
+      'Product Backlog Item', 'Requirement')
+  )
+  AND [System.Links.LinkType] = 'System.LinkTypes.Hierarchy-Forward'
+MODE (Recursive)
+ORDER BY [System.Id]
 ```
-ID,Work Item Type,Title 1,Title 2,Title 3,State,Assigned To,Iteration Path,Story Points,Target Date,Area Path
-"1042","Epic","Auth & Identity","","","Active","Sara Chen <sara@co.com>","Project\Team\Sprint 12","","2026-04-25","Project\Platform"
-"1055","Feature","","SSO Integration","","Active","Marcus Webb <marcus@co.com>","Project\Team\Sprint 12","","2026-04-18","Project\Platform"
-"","User Story","","","Set up SAML config","Active","Marcus Webb <marcus@co.com>","Project\Team\Sprint 12","3","2026-04-11","Project\Platform"
-"","User Story","","","Test IdP integration","Active","Priya Nair <priya@co.com>","Project\Team\Sprint 12","2","","Project\Platform"
-"1056","Feature","","MFA Enforcement","","Active","Sara Chen <sara@co.com>","Project\Team\Sprint 13","","2026-05-02","Project\Platform"
-"","User Story","","","Add TOTP support","Active","Sara Chen <sara@co.com>","Project\Team\Sprint 13","5","","Project\Platform"
-```
-
-Key structural rules:
-
-| Row type | Title 1 | Title 2 | Title 3 |
-|---|---|---|---|
-| Epic | populated | empty | empty |
-| Feature | empty | populated | empty |
-| Story | empty | empty | populated |
-
-- Stories belong to the last Feature row above them
-- Features belong to the last Epic row above them
-- Empty `Target Date` is valid and expected — Maestro handles it
-- Empty `Story Points` is valid — Sprint Load Index shows "—" for that sprint
 
 ---
 
-## Section 4: Data Model — Story Entity
+## Section 5: Go Parser Specification
 
-The following table is added to the Maestro SQLite schema alongside Epic, Feature, Sprint, and DateAuditLog.
+This section is the authoritative spec for the M1 import parser. It is written against real export data from three distinct Azure DevOps projects.
 
-**Story**
-```
-id                  TEXT (Azure DevOps ID; may be empty for new items)
-feature_id          TEXT (FK → Feature)
-title               TEXT
-description         TEXT
-status              TEXT (New | Active | Resolved | Closed)
-owner               TEXT
-sprint              TEXT
-story_points        INTEGER (nullable)
-original_end_date   DATE  ← locked on import if Target Date present; NULL if not
-committed_end_date  DATE  ← PM-settable in Maestro; NULL until PM assigns
-actual_end_date     DATE  ← set when status = Closed/Resolved
-date_source         TEXT  ← 'imported' | 'pm_assigned' | 'inherited'
-created_at          DATETIME
-updated_at          DATETIME
-```
+### 5.1 File Validation
 
-> **`date_source` field:** Tracks where the committed date came from. `imported` = came from Target Date in DevOps. `pm_assigned` = PM set it directly in Maestro. `inherited` = inferred from parent Feature or sprint end date. This field lets the health dashboard distinguish "PM made a deliberate date decision" from "this date is a guess."
+Before parsing any rows:
 
-> **`original_end_date` for Stories:** If `Target Date` is empty in the export, `original_end_date` is `NULL` on import. It is set the first time the PM assigns a date in Maestro — that first PM-assigned date becomes the `original_end_date` and is then locked, exactly like imported dates. Subsequent changes update `committed_end_date` only.
+1. File must be UTF-8 encoded
+2. First row must be a header row
+3. Header must contain `Parent`, `ID`, and `Work Item Type` — if any of these three are missing, reject import with a specific error message
+4. At least one data row must exist
 
----
+All other columns are detected opportunistically — their absence triggers warnings in the import report, not rejection.
 
-## Section 5: PM Date Insertion
+### 5.2 Header Detection
 
-Items that arrive from DevOps without a Target Date are not broken — they are surfaced to the PM for date assignment directly within Maestro. The PM never needs to go back to Azure DevOps to add dates.
+Match column names case-insensitively with whitespace trimmed. Accept these aliases:
 
-### 5.1 Post-Import Date Assignment Screen
-
-After import, if any items are missing dates, Maestro shows a **Date Assignment** screen before the PM lands on the Gantt:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  3 items need dates                                     │
-│  You can set them now or come back to them later.       │
-│                                                         │
-│  ○ Test IdP integration       Sprint 12   [pick date]  │
-│  ○ Add TOTP support           Sprint 13   [pick date]  │
-│  ○ Webhook payload signing    Sprint 15   [pick date]  │
-│                                                         │
-│  [Set dates now]              [Skip — I'll do it later] │
-└─────────────────────────────────────────────────────────┘
-```
-
-- Each item shows its sprint (inferred from `Iteration Path`) as context for picking a date
-- Date picker snaps to sprint boundaries by default (toggle off if needed)
-- PM can skip and assign dates later — undated items appear with a ⚠ indicator in all views
-
-### 5.2 Date Entry Points
-
-PMs can assign or adjust dates from three places:
-
-**1. Gantt view** — undated Stories/Features render as a minimal stub bar at their sprint's position. Clicking the stub opens the detail panel with a date picker. Once a date is set the stub becomes a full bar.
-
-**2. List view** — the `Committed Date` column shows "— set date" for undated items. Clicking it opens an inline date picker.
-
-**3. Detail panel** — available from both Gantt and List. Shows `original_end_date` (locked, or "not set" if never assigned), `committed_end_date` (editable), sprint context, and audit log.
-
-### 5.3 First Date Sets Original
-
-The first time a PM assigns a date to an item that had no Target Date in DevOps:
-
-- `original_end_date` = the date they entered (now locked)
-- `committed_end_date` = the same date
-- `date_source` = `pm_assigned`
-- A `DateAuditLog` entry is created: `old_date = NULL`, `new_date = assigned date`, `delta_days = 0`
-
-Subsequent changes follow the standard audit flow — only `committed_end_date` updates, `original_end_date` stays locked.
-
-### 5.4 Inherited Dates
-
-If a PM does not assign a date and the item has a valid sprint:
-
-- `committed_end_date` = sprint `end_date`
-- `date_source` = `inherited`
-- These items are visually distinguished in the Gantt (lighter bar opacity, no lock icon)
-- They are excluded from Deadline Hit Rate calculations — inherited dates are not commitments
-
----
-
-## Section 6: Maestro Parser Specification (Updated for Three Levels)
-
-### 6.1 File Validation
-
-On import, before parsing any rows, the parser validates:
-
-1. File is UTF-8 encoded
-2. First row is a header row
-3. Header contains all 11 required columns (any order; normalised after detection)
-4. At least one data row exists
-
-If validation fails, import is rejected with a specific error message identifying which column is missing.
-
-### 6.2 Header Normalisation
-
-Column names matched case-insensitively with whitespace trimmed:
-
-| Canonical name | Also accepted |
+| Canonical | Also Accepted |
 |---|---|
-| `Title 1` | `Title1`, `title 1` |
-| `Title 2` | `Title2`, `title 2` |
-| `Title 3` | `Title3`, `title 3` |
-| `Iteration Path` | `Iteration`, `Sprint` |
-| `Story Points` | `StoryPoints`, `Effort`, `Size` |
-| `Target Date` | `TargetDate`, `Due Date`, `Finish Date` |
-| `Assigned To` | `AssignedTo`, `Owner` |
+| `Parent` | `Parent ID`, `ParentId`, `parent` |
+| `ID` | `Id`, `Work Item ID`, `WorkItemId` |
+| `Work Item Type` | `WorkItemType`, `Type` |
+| `Iteration Path` | `IterationPath`, `Sprint`, `Iteration` |
+| `Story Points` | `StoryPoints`, `Effort`, `Size`, `Points` |
+| `Target Date` | `TargetDate`, `Due Date`, `Finish Date`, `DueDate` |
+| `Assigned To` | `AssignedTo`, `Owner`, `Assigned` |
+| `Area Path` | `AreaPath`, `Area` |
 
-### 6.3 Hierarchy Parsing
+Any column matching `Title \d+` or `Title\d+` is collected as a title column regardless of number.
 
-The parser tracks current Epic and current Feature using two pointers:
+### 5.3 ID and Parent Normalisation
 
-```
-current_epic    = nil
-current_feature = nil
+Azure DevOps exports numeric IDs as floats (`500588.0`). Before any lookup or storage:
 
-for each row:
-
-  type = Work Item Type value (normalised — see §6.4)
-
-  if type == "epic":
-    → create Epic record
-    → current_epic = this epic
-    → current_feature = nil  ← reset; next features belong to this epic
-
-  elif type == "feature":
-    → create Feature record
-    → if current_epic != nil: feature.epic_id = current_epic.id
-    → else: feature.epic_id = synthetic_unassigned_epic.id
-    → current_feature = this feature
-
-  elif type == "story":
-    → create Story record
-    → if current_feature != nil: story.feature_id = current_feature.id
-    → else: story.feature_id = synthetic_unassigned_feature.id
-    → (synthetic unassigned feature is auto-created under unassigned epic if needed)
-
-  else:
-    → unknown type — log warning, skip row
+```go
+// Strip decimal from ID and Parent fields
+func normaliseID(raw string) string {
+    raw = strings.TrimSpace(raw)
+    if strings.Contains(raw, ".") {
+        raw = strings.Split(raw, ".")[0]
+    }
+    return raw
+}
 ```
 
-### 6.4 Work Item Type Normalisation
+Empty `Parent` field → item is a root-level entity (Epic or orphan).
 
-The parser maps all known Story type variants to the internal `story` type:
+### 5.4 Work Item Type Normalisation
 
-| Raw value in CSV | Internal type |
+Map all known variants to internal types:
+
+| Raw CSV Value | Internal Type |
 |---|---|
 | `Epic` | `epic` |
 | `Feature` | `feature` |
@@ -325,143 +257,327 @@ The parser maps all known Story type variants to the internal `story` type:
 | `Product Backlog Item` | `story` |
 | `Requirement` | `story` |
 
-Any other value is logged as unknown and the row is skipped.
+Any unrecognised Work Item Type → row logged as unknown, skipped, counted in import report. Parser does not fail — it continues.
 
-### 6.5 Date Parsing
+### 5.5 Hierarchy Reconstruction via Parent ID
 
-`Target Date` field parsed with format detection — not assumed format — because Azure DevOps exports dates in the regional format of the exporting user.
+This is the complete hierarchy algorithm. It does not use title columns, row order, or any other signal.
 
-Formats attempted in order:
+```go
+// Pass 1: Build entity map
+entityMap := map[string]Entity{}
+for each row:
+    id = normaliseID(row["ID"])
+    parentID = normaliseID(row["Parent"])
+    itemType = normaliseType(row["Work Item Type"])
+    title = extractTitle(row)  // see §5.6
+    entity = Entity{id, parentID, itemType, title, ...}
+    entityMap[id] = entity
 
-1. `2006-01-02` (ISO 8601)
-2. `01/02/2006` (US — MM/DD/YYYY)
-3. `02/01/2006` (UK/EU — DD/MM/YYYY)
-4. `2006/01/02` (ISO with slashes)
-5. `January 2, 2006` (long form)
-6. `2-Jan-2006` (abbreviated month)
-7. `2006-01-02T15:04:05Z07:00` (ISO 8601 with timezone)
+// Pass 2: Link entities
+for each entity in entityMap:
+    if entity.parentID == "":
+        if entity.type == "epic":
+            → root epic, no parent needed
+        else:
+            → orphan, assign to synthetic Unassigned bucket
+            → flag in import report
+    else:
+        parent = entityMap[entity.parentID]
+        if parent == nil:
+            → parent not in this export
+            → orphan, assign to Unassigned bucket
+            → flag in import report
+        else:
+            entity.parentRef = parent
+```
 
-Empty `Target Date` → `original_end_date = NULL`; item added to the post-import date assignment list.
+Two-pass approach means row order in the CSV is irrelevant. A Story can appear before its parent Feature and still link correctly.
+
+### 5.6 Title Extraction
+
+Collect all columns matching `Title \d+` pattern. Scan them in ascending column order and return the last non-empty value found:
+
+```go
+func extractTitle(row map[string]string, titleCols []string) string {
+    last := ""
+    for _, col := range titleCols {  // titleCols sorted ascending: Title 1, Title 2...
+        if val := strings.TrimSpace(row[col]); val != "" {
+            last = val
+        }
+    }
+    if last == "" {
+        return fmt.Sprintf("Untitled %s %s", row["Work Item Type"], row["ID"])
+    }
+    return last
+}
+```
+
+### 5.7 Iteration Path Parsing
+
+Iteration Path format varies in depth and uses `\\` as separator. The parser must identify the sprint name intelligently rather than by fixed segment position.
+
+Real examples from production exports:
+```
+FinDash\\Archive\\FY26 Q3              → unscheduled (Archive)
+FinDash\\Backlog\\Queue                → unscheduled (Backlog)
+FinDash\\Delivery\\FY26 Q3\\FY26 Q3.1 → sprint = "FY26 Q3", sub-sprint = "FY26 Q3.1"
+FinDash\\Team-Finance-Insights\\Sprint 2\\DataModel → sprint = "Sprint 2"
+Finance Analytics Dashboard\\Sprint 1  → sprint = "Sprint 1"
+```
+
+Algorithm:
+
+```go
+func parseIterationPath(path string) (sprintName string, isScheduled bool) {
+    segments := strings.Split(path, `\\`)
+
+    // Unscheduled signals — treat as backlog
+    unscheduledKeywords := []string{"backlog", "archive", "queue"}
+    for _, seg := range segments {
+        for _, kw := range unscheduledKeywords {
+            if strings.EqualFold(strings.TrimSpace(seg), kw) {
+                return "", false
+            }
+        }
+    }
+
+    // Find the first segment that looks like a sprint
+    // Sprint patterns: "Sprint N", "FY2N QN", "Q\d", "\d{4} Q\d", "Iteration N"
+    sprintPatterns := []*regexp.Regexp{
+        regexp.MustCompile(`(?i)^sprint\s+\d+`),
+        regexp.MustCompile(`(?i)^FY\d{2}\s+Q\d`),
+        regexp.MustCompile(`(?i)^Q\d{1,2}$`),
+        regexp.MustCompile(`(?i)^iteration\s+\d+`),
+        regexp.MustCompile(`(?i)^\d{4}\s+Q\d`),
+    }
+
+    for _, seg := range segments {
+        seg = strings.TrimSpace(seg)
+        for _, pattern := range sprintPatterns {
+            if pattern.MatchString(seg) {
+                return seg, true
+            }
+        }
+    }
+
+    // No recognisable sprint segment found → unscheduled
+    return "", false
+}
+```
+
+Sprint records are created from unique sprint names encountered during parsing. Start and end dates are populated from the sprint configuration step.
+
+### 5.8 Target Date Parsing
+
+Target Date field must handle multiple formats including full datetime strings. Parse in this order:
+
+```go
+var dateFormats = []string{
+    "2006-01-02",                    // ISO 8601
+    "01/02/2006",                    // US MM/DD/YYYY
+    "02/01/2006",                    // UK DD/MM/YYYY
+    "2006/01/02",                    // ISO with slashes
+    "01/02/2006 3:04:05 PM",         // US datetime with 12hr (real DevOps format)
+    "01/02/2006 15:04:05",           // US datetime with 24hr
+    "2006-01-02T15:04:05Z07:00",     // ISO 8601 with timezone
+    "January 2, 2006",               // Long form
+    "2-Jan-2006",                    // Abbreviated month
+}
+
+func parseTargetDate(raw string) (*time.Time, error) {
+    raw = strings.TrimSpace(raw)
+    if raw == "" {
+        return nil, nil  // valid — not an error
+    }
+    for _, format := range dateFormats {
+        if t, err := time.Parse(format, raw); err == nil {
+            // Strip time component — store date only
+            d := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+            return &d, nil
+        }
+    }
+    return nil, fmt.Errorf("unparseable date: %q", raw)
+}
+```
 
 Unparseable non-empty value → log warning, treat as empty, add to date assignment list.
 
-> **Ambiguity:** Formats 2 and 3 are ambiguous for days ≤ 12. Parser defaults to US (MM/DD/YYYY). Confirm regional format during M0.
+> **Ambiguity note:** `01/02/2026` is ambiguous between US (Jan 2) and UK (Feb 1) format. Default to US. During M0, confirm the regional format used by the internal pilot teams.
 
-### 6.6 Iteration Path Parsing
+### 5.9 Assigned To Parsing
 
-Extracts last path segment as sprint name:
-
-```
-"Project\Team\Sprint 14"  → "Sprint 14"
-"Project\Sprint 14"       → "Sprint 14"
-"Sprint 14"               → "Sprint 14"
-""                         → nil → apply sprint fallback chain (PRD §4.2)
-```
-
-### 6.7 Assigned To Parsing
+Two formats observed in real exports:
 
 ```
-"Sara Chen <sara@company.com>"  → display_name = "Sara Chen", email = "sara@company.com"
-"Sara Chen"                     → display_name = "Sara Chen", email = nil
-""                              → owner = nil
+"First Last <email@domain.com>"      → common format
+"Last, First <email@domain.com>"     → also common
+"email@domain.com"                   → email only, no display name
+""                                   → unassigned
 ```
 
-### 6.8 Story Points Parsing
+```go
+func parseAssignedTo(raw string) (displayName, email string) {
+    raw = strings.TrimSpace(raw)
+    if raw == "" {
+        return "", ""
+    }
 
-- Empty → `story_points = nil`
-- Numeric → parse as integer; decimals rounded to nearest integer
+    // Extract email from angle brackets if present
+    emailMatch := regexp.MustCompile(`<([^>]+)>`).FindStringSubmatch(raw)
+    if len(emailMatch) > 1 {
+        email = strings.TrimSpace(emailMatch[1])
+        // Display name is everything before the angle bracket
+        displayName = strings.TrimSpace(strings.Split(raw, "<")[0])
+        // Handle "Last, First" → store as-is; UI displays what DevOps provides
+        displayName = strings.Trim(displayName, `"' `)
+        return displayName, email
+    }
+
+    // No angle bracket — check if it looks like an email
+    if strings.Contains(raw, "@") {
+        return "", raw  // email only
+    }
+
+    // Plain name, no email
+    return raw, ""
+}
+```
+
+### 5.10 State Normalisation
+
+Map known state variants to Maestro's four internal states:
+
+| Raw DevOps Value | Maestro State | Display Color |
+|---|---|---|
+| `New` | `not_started` | Grey |
+| `To Do` | `not_started` | Grey |
+| `Proposed` | `not_started` | Grey |
+| `Active` | `in_progress` | Blue |
+| `In Progress` | `in_progress` | Blue |
+| `Committed` | `in_progress` | Blue |
+| `Open` | `in_progress` | Blue |
+| `Blocked` | `blocked` | Amber |
+| `On Hold` | `blocked` | Amber |
+| `Resolved` | `done` | Green |
+| `Closed` | `done` | Green |
+| `Completed` | `done` | Green |
+| `Done` | `done` | Green |
+
+Unrecognised state → stored as raw string, mapped to `not_started` for color coding, flagged in import report.
+
+### 5.11 Story Points Parsing
+
+- Empty string → `story_points = nil` (valid; Sprint Load Index shows "—")
+- Float string (`"5.0"`) → parse as float, round to nearest integer
+- Integer string (`"5"`) → parse directly
 - Non-numeric → log warning, set nil
 
-### 6.9 Import Report
+### 5.12 Import Report
+
+After parsing, before the PM confirms, Maestro shows:
 
 ```
-✓  Epics parsed:                4
-✓  Features parsed:             10
-✓  Stories parsed:              24
-✓  Sprints detected:            6
-⚠  Items missing Target Date:   8  (will appear in date assignment screen)
-⚠  Items missing sprint:        1  (flagged for review)
-⚠  Orphaned features:           0
-⚠  Orphaned stories:            0
-⚠  Rows skipped (unknown type): 0
-⚠  Date format detected:        US (MM/DD/YYYY)
+PARSED SUCCESSFULLY
+✓  Epics:                     12
+✓  Features:                  48
+✓  Stories:                   180
+✓  Sprints detected:          8
+
+WARNINGS — import will proceed, but some items need attention
+⚠  Items missing Target Date:    94  → Date Assignment screen after import
+⚠  Items missing sprint:         23  → Unscheduled; assign sprint in List view
+⚠  Items missing Story Points:  180  → Sprint Load Index unavailable
+⚠  Items with blank titles:       3  → Assigned "Untitled Story {ID}"
+⚠  Orphaned items:                2  → Assigned to Unassigned bucket
+⚠  Unknown states found:          1  → "Expedite" stored as-is, mapped to In Progress
+
+OPTIONAL DATA
+ℹ  Area Path detected            →  4 unique areas available as List view filter
+ℹ  Assigned To detected          →  12 unique team members
+ℹ  Date format detected          →  US (MM/DD/YYYY HH:MM:SS AM/PM)
+
+ROWS SKIPPED
+✗  Unknown Work Item Types:       0
+✗  Missing required fields:       0
 ```
+
+The PM reviews this before confirming. If any rows were skipped, the report shows exactly which IDs were affected and why.
 
 ---
 
-## Section 7: View Updates for Stories
+## Section 6: Post-Import Date Assignment
 
-### 7.1 Gantt View
-
-Three levels of nesting:
+If any items have `NULL` Target Date after import, Maestro shows a Date Assignment screen before the PM reaches the Gantt.
 
 ```
-▾ Epic — Auth & Identity                    [════════════════]
-  ▾ Feature — SSO Integration               [════════]
-      Story — Set up SAML config            [════]
-      Story — Test IdP integration          [stub — no date]
-  ▾ Feature — MFA Enforcement                        [════════]
-      Story — Add TOTP support              [stub — no date]
+┌──────────────────────────────────────────────────────────────┐
+│  94 items need dates                                         │
+│  Set them now or come back later from the List view.         │
+│                                                              │
+│  Filter: [All types ▾]  [All sprints ▾]                     │
+│                                                              │
+│  ○ Govern Drilldown adapter      Sprint 1   [pick date ▾]   │
+│  ○ Calibrate Sandbox revenue     Sprint 4   [pick date ▾]   │
+│  ○ Deploy Aster scheduler        Backlog    [assign sprint]  │
+│  ○ Localize Closebook revenue    Sprint 2   [pick date ▾]   │
+│  ... 90 more                                                 │
+│                                                              │
+│  [Set all to sprint end dates]   [Skip — I'll do it later]  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-- Epics expand/collapse to show/hide Features
-- Features expand/collapse to show/hide Stories
-- Stories default to **collapsed** at the Feature level — PM expands if needed
-- Stories without dates render as a stub bar with ⚠ indicator at the sprint's start position
-- Story bars are thinner than Feature bars (8px height vs 10px for Features, 22px for Epics) to support density
-- Story bars are not draggable unless a date has been assigned — clicking a stub opens the date picker instead
+**"Set all to sprint end dates"** is a bulk action — assigns `committed_end_date` = sprint `end_date` for every undated item that has a sprint assignment. `date_source` = `inherited`. Items with no sprint remain undated.
 
-### 7.2 List View
+**First PM-assigned date becomes `original_end_date`** and locks — same rule as imported dates. Subsequent changes move only `committed_end_date`.
 
-Three grouping levels: Epic → Feature → Story.
+Items with `date_source = inherited` are excluded from Deadline Hit Rate and Slip Analysis — inherited dates are not commitments.
 
-Story rows indented further than Feature rows. Additional column at Story level:
+---
 
-| Column | Notes |
-|---|---|
-| Date Source | `imported` / `pm assigned` / `inherited` — shown as a small badge |
+## Section 7: Tiered Functionality Model
 
-Story rows show "— set date" in the Committed Date column if undated, with click-to-assign behaviour.
+Rather than rejecting imports that are missing recommended columns, Maestro degrades gracefully and tells the PM exactly what each missing column costs them.
 
-### 7.3 Health Dashboard
+| Tier | Columns Present | What Works |
+|---|---|---|
+| **Tier 1 — Minimum viable** | `Parent`, `ID`, `Work Item Type` | Hierarchy renders; items visible in List view; no Gantt bars; no metrics |
+| **Tier 2 — Gantt renders** | + `Iteration Path`, `Target Date` | Gantt bars appear; sprint placement works; no health metrics |
+| **Tier 3 — Health metrics** | + `State`, `Story Points` | Deadline Hit Rate, Sprint Load Index, Slip Analysis all available |
+| **Tier 4 — Full enrichment** | + `Assigned To`, `Area Path` | Owner display, area filtering, full team visibility |
 
-**Metrics updated for Stories:**
+At import, Maestro detects which tier the export reaches and shows a banner:
 
-- **Deadline Hit Rate** — calculated at Story level as well as Feature level. Story-level rate gives more granular signal since Stories complete within a sprint, not across sprints. Both rates shown; PM can toggle between them.
-- **Sprint Load Index** — unchanged; already uses story points which are set at Story level
-- **Scope Creep Rate** — Stories added to a sprint after it started now count, not just Features. This is more accurate since Story-level scope changes are the most common form of mid-sprint creep.
-- **Slip Analysis** — applies to Stories with PM-assigned or imported dates. Stories with `date_source = inherited` are excluded from slip calculations — inherited dates are not commitments.
-- **Orphaned Story Rate** — new metric alongside Orphaned Feature Rate:
+> **"Your export supports Tier 2 — Gantt view is available. To enable health metrics, add State and Story Points columns to your DevOps query and re-export."**
 
-```
-Orphaned Story Rate = (Stories with no parent Feature) / (Total stories) × 100
-```
+This removes the pressure to get the query perfect on first run and makes Maestro immediately useful even with partial data.
 
 ---
 
 ## Section 8: Common Export Problems and Fixes
 
-| Problem | Symptom in Maestro | Fix |
+| Problem | Symptom | Fix |
 |---|---|---|
-| Wrong query type (flat list) | All items import as Epics; no Features or Stories | Re-run as "Tree of work items" |
-| `Title 3` column missing | Stories not detected | Add Title 3 via Column Options |
-| Wrong Story type name | Stories skipped as unknown type | Match type name to process template (User Story / Product Backlog Item / Requirement) |
-| `Target Date` empty on most Stories | 20+ items in date assignment screen | Expected — use date assignment screen or set dates in DevOps first |
-| `Iteration Path` missing | All sprints show as unassigned | Add Iteration Path via Column Options |
-| `Story Points` empty | Sprint Load Index shows "—" | Set estimates in DevOps or accept metric unavailability for now |
-| Features appear at Story level | Title 2 and Title 3 both populated on Feature rows | Query not correctly set to tree type |
-| Regional date format mismatch | Dates import as wrong month/day | Confirm regional format; re-export from ISO-format machine if needed |
+| `Parent` column missing | Import rejected — missing required column | Add Parent via Column Options and re-export |
+| Wrong query type (flat list) | All items show as orphans — no hierarchy | Re-run as "Tree of work items" |
+| Story Points all empty | Sprint Load Index shows "—" for all sprints | Expected for many teams — use Tier 3 guidance or accept metric unavailability |
+| Target Date empty on most items | 50+ items in date assignment screen | Expected — use bulk "set to sprint end" or assign individually |
+| `Blocked` state not recognised | Items shown as grey instead of amber | Now handled in state normalisation table |
+| Iteration Path segments unrecognised | Items show as unscheduled | Check sprint naming pattern against supported formats; contact Maestro support to add pattern |
+| Parent ID shows as `500588.0` | No effect — parser strips decimal automatically | No action needed |
+| `Assigned To` in `Last, First` format | No effect — parser handles both formats | No action needed |
+| Items in Archive or Backlog path | Items show as unscheduled — correct | These are genuinely unscheduled; assign sprint in List view if needed |
 
 ---
 
-## Section 9: PRD Sections Updated by This Addendum
+## Section 9: PRD Sections Superseded by This Addendum
 
 | PRD Section | Change |
 |---|---|
-| §4.1 Core Entities | Story entity added (Addendum §4) |
-| §4.2 Import Schema Mapping | Hierarchy via `Title 1`/`Title 2`/`Title 3`; full parser spec in Addendum §6 |
-| §5.1 Import | JSON format removed from POC scope; post-import date assignment screen added |
-| §5.2 Gantt View | Three-level nesting; stub bars for undated items; Stories collapsed by default |
-| §5.3 List View | Three-level grouping; date source badge; click-to-assign for undated items |
-| §5.4 Health Dashboard | Story-level Deadline Hit Rate; Story-level scope creep; Orphaned Story Rate |
-| §9 Milestones — M0 | Validate three-level tree query export; confirm Story type name for internal teams |
+| §4.1 Core Entities | `Parent` field added to Feature and Story entities. `date_source` field added to Story. |
+| §4.2 Import Schema Mapping | Entirely superseded. Hierarchy via `Parent` ID, not title columns. Full parser spec in Addendum §5. |
+| §5.1 Import — Accepted Formats | CSV only. JSON removed from POC scope. |
+| §5.2 Gantt View | Tiered functionality model applies — Gantt renders at Tier 2, not Tier 1. |
+| §5.3 List View | All items visible at Tier 1 regardless of date/sprint availability. |
+| §5.4 Health Dashboard | Metrics require Tier 3. Missing Story Points permanently disables Sprint Load Index for that import. |
+| §9 Milestones — M0 | M0 now includes: validate parser against all three example CSVs; confirm sprint name patterns for internal teams; confirm regional date format; measure SQLite baseline binary size. |

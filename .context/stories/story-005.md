@@ -1,47 +1,52 @@
-# Story 005: Onboarding flow
+# Story 005: Scaffold Vite + Svelte frontend
 
-**Status:** not-started  
-**Type:** ui  
-**Created:** 2026-05-06  
-**Last accessed:** 2026-05-06  
+**Status:** not-started
+**Type:** ui
+**Created:** 2026-05-06
+**Last accessed:** 2026-05-06
 **Completed:** —
 
 ---
 
 ## Goal
-Build the multi-step onboarding screen: file drop/picker, import preview, sprint review table, manual sprint config fallback, and confirmation before entering the app.
+Initialize a Vite + Svelte SPA project, wire it into the Go backend via `embed.FS`, and serve the built assets from the single binary. Establish the design token system and global layout shell.
 
 ## Verification
-Launch the app with an empty database. Drop a test CSV onto the onboarding screen, proceed through sprint review, click "build roadmap," and land on the List view with imported data visible.
+Run `cd frontend && npm run build`, then `go build -o maestro ./cmd/maestro` and execute `./maestro`. Open `http://localhost:8080` and see the app shell load with the correct dark theme, fonts (DM Mono, Fraunces), and sidebar navigation.
 
 ## Scope — files this story may touch
-- `frontend/src/screens/Onboarding.svelte`
-- `frontend/src/components/DropZone.svelte`
-- `frontend/src/components/SprintPreview.svelte`
-- `frontend/src/components/StepBar.svelte`
+- `frontend/package.json`
+- `frontend/vite.config.ts`
+- `frontend/tsconfig.json`
+- `frontend/index.html`
+- `frontend/src/main.ts`
+- `frontend/src/App.svelte`
+- `frontend/src/app.css`
 - `frontend/src/lib/api.ts`
-- `frontend/src/stores/project.ts`
+- `frontend/src/stores/*.ts`
+- `cmd/maestro/main.go` (static file serving)
 
 ## Out of scope — do not touch
-- List view implementation (just navigate to it after onboarding)
-- Re-import logic from inside the app (Settings → Import comes later)
-- Gantt or Health screens
+- Actual screen components (onboarding, list, gantt, health, settings)
+- API business logic (already built in story-004)
+- Import parser
 
 ## Dependencies
-- story-003
 - story-004
 
 ---
 
 ## Checklist
-- [ ] Create `Onboarding.svelte` with 3-step state machine (Import → Sprints → Confirm)
-- [ ] Build `DropZone.svelte` with drag-and-drop and file picker fallback
-- [ ] POST file to `/api/import` and display preview counts (epics, features, sprints, missing dates, orphans)
-- [ ] Build `SprintPreview.svelte` table showing imported/generated sprints with editable start dates
-- [ ] Add manual config toggle with sprint length, first start date, and count inputs
-- [ ] Show confirmation summary card before finalizing
-- [ ] Wire "build roadmap" to create project and route to List view
-- [ ] Handle import errors with inline messages (malformed rows, unsupported format)
+- [ ] Initialize Vite project with Svelte and TypeScript (`npm create vite@latest frontend -- --template svelte-ts`)
+- [ ] Configure build output to `frontend/dist`
+- [ ] Add DM Mono and Fraunces font imports in `index.html`
+- [ ] Create CSS custom properties in `app.css` matching mockup tokens (bg, bg2, accent, text, etc.)
+- [ ] Build `App.svelte` with global layout shell: sidebar, main area, status bar slots
+- [ ] Create `api.ts` fetch wrapper with base URL and JSON helpers
+- [ ] Set up basic Svelte stores for `project` and `view`
+- [ ] Update `cmd/maestro/main.go` to serve `frontend/dist` via `embed.FS` on `/`
+- [ ] Add dev proxy config so `npm run dev` can reach the Go API on `:8080`
+- [ ] Verify `go build` produces a binary that serves the frontend correctly
 
 ---
 
