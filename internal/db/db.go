@@ -85,8 +85,28 @@ func Migrate(db *sql.DB) error {
 		}
 	}
 
+	if err := ensureColumnExists(ctx, tx, "features", "date_source", "TEXT NOT NULL DEFAULT 'imported'"); err != nil {
+		return fmt.Errorf("migrate features.date_source: %w", err)
+	}
+
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit migration tx: %w", err)
+	}
+	return nil
+}
+
+func ensureColumnExists(ctx context.Context, tx *sql.Tx, table, column, def string) error {
+	var exists bool
+	err := tx.QueryRowContext(ctx, `SELECT 1 FROM pragma_table_info(?) WHERE name = ?`, table, column).Scan(&exists)
+	if err == nil {
+		return nil
+	}
+	if err != sql.ErrNoRows {
+		return fmt.Errorf("check column %s.%s: %w", table, column, err)
+	}
+	_, err = tx.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", table, column, def))
+	if err != nil {
+		return fmt.Errorf("add column %s.%s: %w", table, column, err)
 	}
 	return nil
 }

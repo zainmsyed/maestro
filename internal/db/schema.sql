@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS features (
     committed_end_date TEXT,
     actual_end_date TEXT,
     story_points INTEGER,
+    date_source TEXT NOT NULL DEFAULT 'imported',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     FOREIGN KEY (epic_id) REFERENCES epics(id) ON UPDATE CASCADE ON DELETE SET NULL
@@ -55,6 +56,24 @@ CREATE TABLE IF NOT EXISTS date_audit_logs (
     changed_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS stories (
+    id TEXT PRIMARY KEY,
+    feature_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL,
+    owner TEXT NOT NULL DEFAULT '',
+    sprint TEXT NOT NULL DEFAULT '',
+    story_points INTEGER,
+    original_end_date TEXT,
+    committed_end_date TEXT,
+    actual_end_date TEXT,
+    date_source TEXT NOT NULL DEFAULT 'imported',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (feature_id) REFERENCES features(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS idx_features_epic_id ON features(epic_id);
 CREATE INDEX IF NOT EXISTS idx_features_sprint ON features(sprint);
 CREATE INDEX IF NOT EXISTS idx_epics_sprint_start ON epics(sprint_start);
@@ -62,3 +81,5 @@ CREATE INDEX IF NOT EXISTS idx_epics_sprint_end ON epics(sprint_end);
 CREATE INDEX IF NOT EXISTS idx_sprints_name ON sprints(name);
 CREATE INDEX IF NOT EXISTS idx_date_audit_logs_entity ON date_audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_date_audit_logs_changed_at ON date_audit_logs(changed_at);
+CREATE INDEX IF NOT EXISTS idx_stories_feature_id ON stories(feature_id);
+CREATE INDEX IF NOT EXISTS idx_stories_sprint ON stories(sprint);

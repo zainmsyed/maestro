@@ -139,6 +139,161 @@ func TestSprintCRUD(t *testing.T) {
 	}
 }
 
+func TestStoryCRUD(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	epicID := "E-1"
+	if err := repos.Epics.Create(ctx, &models.Epic{ID: epicID, Title: "Epic", Description: "", Status: "Active"}); err != nil {
+		t.Fatalf("seed epic: %v", err)
+	}
+	featureID := "F-1"
+	if err := repos.Features.Create(ctx, &models.Feature{ID: featureID, EpicID: &epicID, Title: "Feature", Description: "", Status: "Active"}); err != nil {
+		t.Fatalf("seed feature: %v", err)
+	}
+
+	points := 5
+	original := date(2026, 5, 14)
+	story := &models.Story{
+		ID:              "S-1",
+		FeatureID:       featureID,
+		Title:           "Auth flow",
+		Description:     "OAuth2 login",
+		Status:          "New",
+		Owner:           "Sam",
+		Sprint:          "Sprint 12",
+		OriginalEndDate: &original,
+		StoryPoints:     &points,
+		DateSource:      "manual",
+	}
+	if err := repos.Stories.Create(ctx, story); err != nil {
+		t.Fatalf("create story: %v", err)
+	}
+
+	got, err := repos.Stories.GetByID(ctx, story.ID)
+	if err != nil {
+		t.Fatalf("get story: %v", err)
+	}
+	if got.FeatureID != featureID {
+		t.Fatalf("unexpected feature id: %#v", got.FeatureID)
+	}
+	if got.StoryPoints == nil || *got.StoryPoints != points {
+		t.Fatalf("unexpected story points: %#v", got.StoryPoints)
+	}
+	if got.DateSource != "manual" {
+		t.Fatalf("unexpected date_source: %q", got.DateSource)
+	}
+
+	list, err := repos.Stories.List(ctx)
+	if err != nil {
+		t.Fatalf("list stories: %v", err)
+	}
+	if len(list) != 1 {
+		t.Fatalf("expected 1 story, got %d", len(list))
+	}
+}
+
+func TestFeatureDateSource_RoundTrip(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	feature := &models.Feature{ID: "F-DS", Title: "Feature", Description: "", Status: "Active", DateSource: "manual"}
+	if err := repos.Features.Create(ctx, feature); err != nil {
+		t.Fatalf("create feature: %v", err)
+	}
+
+	got, err := repos.Features.GetByID(ctx, feature.ID)
+	if err != nil {
+		t.Fatalf("get feature: %v", err)
+	}
+	if got.DateSource != "manual" {
+		t.Fatalf("expected DateSource=manual, got %q", got.DateSource)
+	}
+
+	featureDefault := &models.Feature{ID: "F-DS-DEF", Title: "Feature", Description: "", Status: "Active"}
+	if err := repos.Features.Create(ctx, featureDefault); err != nil {
+		t.Fatalf("create feature with default date_source: %v", err)
+	}
+
+	got2, err := repos.Features.GetByID(ctx, featureDefault.ID)
+	if err != nil {
+		t.Fatalf("get feature with default date_source: %v", err)
+	}
+	if got2.DateSource != "imported" {
+		t.Fatalf("expected DateSource=imported, got %q", got2.DateSource)
+	}
+}
+
+func TestStoryDateSource_RoundTrip(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	epicID := "E-1"
+	if err := repos.Epics.Create(ctx, &models.Epic{ID: epicID, Title: "Epic", Description: "", Status: "Active"}); err != nil {
+		t.Fatalf("seed epic: %v", err)
+	}
+	featureID := "F-1"
+	if err := repos.Features.Create(ctx, &models.Feature{ID: featureID, EpicID: &epicID, Title: "Feature", Description: "", Status: "Active"}); err != nil {
+		t.Fatalf("seed feature: %v", err)
+	}
+
+	story := &models.Story{ID: "S-DS", FeatureID: featureID, Title: "Story", Description: "", Status: "Active", DateSource: "manual"}
+	if err := repos.Stories.Create(ctx, story); err != nil {
+		t.Fatalf("create story: %v", err)
+	}
+
+	got, err := repos.Stories.GetByID(ctx, story.ID)
+	if err != nil {
+		t.Fatalf("get story: %v", err)
+	}
+	if got.DateSource != "manual" {
+		t.Fatalf("expected DateSource=manual, got %q", got.DateSource)
+	}
+
+	storyDefault := &models.Story{ID: "S-DS-DEF", FeatureID: featureID, Title: "Story", Description: "", Status: "Active"}
+	if err := repos.Stories.Create(ctx, storyDefault); err != nil {
+		t.Fatalf("create story with default date_source: %v", err)
+	}
+
+	got2, err := repos.Stories.GetByID(ctx, storyDefault.ID)
+	if err != nil {
+		t.Fatalf("get story with default date_source: %v", err)
+	}
+	if got2.DateSource != "imported" {
+		t.Fatalf("expected DateSource=imported, got %q", got2.DateSource)
+	}
+}
+
+func TestStoryCreate_InvalidFeatureID(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	story := &models.Story{
+		ID:        "S-BAD-FK",
+		FeatureID: "F-NOT-FOUND",
+		Title:     "Orphan story",
+		Status:    "New",
+	}
+	if err := repos.Stories.Create(ctx, story); err == nil {
+		t.Fatalf("expected error for story with missing feature_id, got nil")
+	}
+}
+
+func TestStoryGetByID_NotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	repos := newRepos(t)
+
+	_, err := repos.Stories.GetByID(ctx, "S-NOT-FOUND")
+	if err == nil {
+		t.Fatalf("expected error for missing story, got nil")
+	}
+}
+
 func TestAuditCRUD(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

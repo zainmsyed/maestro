@@ -1,9 +1,9 @@
 # Story 003: Build prescribed query CSV parser with three-level hierarchy
 
-**Status:** not-started
+**Status:** in-progress  
 **Type:** —
 **Created:** 2026-05-06
-**Last accessed:** 2026-05-06
+**Last accessed:** 2026-05-06  
 **Completed:** —
 
 ---

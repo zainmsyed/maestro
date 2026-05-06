@@ -2,18 +2,18 @@ package models
 
 import "time"
 
-type Feature struct {
+type Story struct {
 	ID               string
-	EpicID           *string
+	FeatureID        string
 	Title            string
 	Description      string
 	Status           string
 	Owner            string
 	Sprint           string
+	StoryPoints      *int
 	OriginalEndDate  *time.Time
 	CommittedEndDate *time.Time
 	ActualEndDate    *time.Time
-	StoryPoints      *int
 	DateSource       string
 	CreatedAt        time.Time
 	UpdatedAt        time.Time

@@ -22,6 +22,7 @@ func TestOpenCreatesSchema(t *testing.T) {
 	assertTableExists(t, database, "features")
 	assertTableExists(t, database, "sprints")
 	assertTableExists(t, database, "date_audit_logs")
+	assertTableExists(t, database, "stories")
 
 	assertIndexExists(t, database, "idx_features_epic_id")
 	assertIndexExists(t, database, "idx_features_sprint")
@@ -30,6 +31,8 @@ func TestOpenCreatesSchema(t *testing.T) {
 	assertIndexExists(t, database, "idx_sprints_name")
 	assertIndexExists(t, database, "idx_date_audit_logs_entity")
 	assertIndexExists(t, database, "idx_date_audit_logs_changed_at")
+	assertIndexExists(t, database, "idx_stories_feature_id")
+	assertIndexExists(t, database, "idx_stories_sprint")
 }
 
 func assertTableExists(t *testing.T, db *sql.DB, table string) {

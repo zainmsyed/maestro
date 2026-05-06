@@ -1,10 +1,10 @@
 # Story 002: Update SQLite schema for Story entity and date_source
 
-**Status:** not-started
+**Status:** complete  
 **Type:** —
 **Created:** 2026-05-06
-**Last accessed:** 2026-05-06
-**Completed:** —
+**Last accessed:** 2026-05-06  
+**Completed:** 2026-05-06
 
 ---
 
@@ -37,19 +37,19 @@ Run `go test ./...` and see all tests pass. Inspect `maestro.db` schema and conf
 ---
 
 ## Checklist
-- [ ] Add `stories` table to `schema.sql` matching Addendum §4 (id, feature_id, title, description, status, owner, sprint, story_points, original_end_date, committed_end_date, actual_end_date, date_source, created_at, updated_at)
-- [ ] Add `date_source TEXT NOT NULL DEFAULT 'imported'` to `features` table
-- [ ] Add `date_source TEXT NOT NULL DEFAULT 'imported'` to `stories` table
-- [ ] Add `idx_stories_feature_id` index
-- [ ] Add `idx_stories_sprint` index
-- [ ] Create `internal/models/story.go` with `Story` struct
-- [ ] Update `internal/models/feature.go` with `DateSource` field
-- [ ] Create `internal/repository/story.go` with CRUD interface and SQLite implementation
-- [ ] Update `internal/repository/feature.go` to scan and write `DateSource`
-- [ ] Update `internal/repository/repository.go` to include `Stories`
-- [ ] Update `internal/repository/repository_test.go` with Story CRUD tests and date_source round-trip tests
-- [ ] Verify `go test ./...` passes
-- [ ] Verify schema with `sqlite3 maestro.db ".schema"`
+- [x] Add `stories` table to `schema.sql` matching Addendum §4 (id, feature_id, title, description, status, owner, sprint, story_points, original_end_date, committed_end_date, actual_end_date, date_source, created_at, updated_at)
+- [x] Add `date_source TEXT NOT NULL DEFAULT 'imported'` to `features` table
+- [x] Add `date_source TEXT NOT NULL DEFAULT 'imported'` to `stories` table
+- [x] Add `idx_stories_feature_id` index
+- [x] Add `idx_stories_sprint` index
+- [x] Create `internal/models/story.go` with `Story` struct
+- [x] Update `internal/models/feature.go` with `DateSource` field
+- [x] Create `internal/repository/story.go` with CRUD interface and SQLite implementation
+- [x] Update `internal/repository/feature.go` to scan and write `DateSource`
+- [x] Update `internal/repository/repository.go` to include `Stories`
+- [x] Update `internal/repository/repository_test.go` with Story CRUD tests and date_source round-trip tests
+- [x] Verify `go test ./...` passes
+- [x] Verify schema with programmatic inspection (sqlite3 CLI unavailable)
 
 ---
 
@@ -58,3 +58,4 @@ Run `go test ./...` and see all tests pass. Inspect `maestro.db` schema and conf
 ---
 
 ## Completion Summary
+Extended the SQLite schema and repository layer to support the three-level hierarchy (Epic → Feature → Story). Added a `stories` table with a foreign key to `features`, along with `date_source` columns on both `features` and `stories` (defaulting to `'imported'`). Created the `Story` model and corresponding `StoryRepository` with CRUD operations, updated `FeatureRepository` to read and write `DateSource`, and wired `Stories` into the central `Repositories` struct. All repository methods enforce the `'imported'` default at the code layer when an empty `DateSource` is passed. Added comprehensive tests for Story CRUD, Feature date_source round-trip, and Story date_source round-trip. All tests pass.

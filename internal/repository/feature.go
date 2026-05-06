@@ -29,15 +29,18 @@ func (r *SQLiteFeatureRepository) Create(ctx context.Context, feature *models.Fe
 	if feature.UpdatedAt.IsZero() {
 		feature.UpdatedAt = now
 	}
+	if feature.DateSource == "" {
+		feature.DateSource = "imported"
+	}
 	_, err := r.db.ExecContext(ctx, `
 		INSERT INTO features (
 			id, epic_id, title, description, status, owner, sprint,
 			original_end_date, committed_end_date, actual_end_date,
-			story_points, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			story_points, date_source, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, feature.ID, feature.EpicID, feature.Title, feature.Description, feature.Status, feature.Owner, feature.Sprint,
 		formatDatePtr(feature.OriginalEndDate), formatDatePtr(feature.CommittedEndDate), formatDatePtr(feature.ActualEndDate),
-		feature.StoryPoints, formatTimestamp(feature.CreatedAt), formatTimestamp(feature.UpdatedAt))
+		feature.StoryPoints, feature.DateSource, formatTimestamp(feature.CreatedAt), formatTimestamp(feature.UpdatedAt))
 	if err != nil {
 		return fmt.Errorf("insert feature: %w", err)
 	}
@@ -48,7 +51,7 @@ func (r *SQLiteFeatureRepository) GetByID(ctx context.Context, id string) (*mode
 	row := r.db.QueryRowContext(ctx, `
 		SELECT id, epic_id, title, description, status, owner, sprint,
 		       original_end_date, committed_end_date, actual_end_date,
-		       story_points, created_at, updated_at
+		       story_points, date_source, created_at, updated_at
 		FROM features WHERE id = ?
 	`, id)
 	return scanFeature(row)
@@ -58,7 +61,7 @@ func (r *SQLiteFeatureRepository) List(ctx context.Context) ([]models.Feature, e
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT id, epic_id, title, description, status, owner, sprint,
 		       original_end_date, committed_end_date, actual_end_date,
-		       story_points, created_at, updated_at
+		       story_points, date_source, created_at, updated_at
 		FROM features ORDER BY id
 	`)
 	if err != nil {
@@ -87,7 +90,7 @@ func scanFeature(s scanner) (*models.Feature, error) {
 	var storyPoints sql.NullInt64
 	var createdAt, updatedAt string
 	if err := s.Scan(&feature.ID, &epicID, &feature.Title, &feature.Description, &feature.Status, &feature.Owner, &feature.Sprint,
-		&original, &committed, &actual, &storyPoints, &createdAt, &updatedAt); err != nil {
+		&original, &committed, &actual, &storyPoints, &feature.DateSource, &createdAt, &updatedAt); err != nil {
 		return nil, fmt.Errorf("scan feature: %w", err)
 	}
 	if epicID.Valid {
