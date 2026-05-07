@@ -4,6 +4,11 @@
   export let snapToSprint = true;
   export let disabled = false;
   export let error: string | null = null;
+  export let label = 'Target date';
+  export let showLabel = true;
+  export let showSnapToggle = true;
+  export let compact = false;
+  export let inputAriaLabel: string | undefined = undefined;
 
   const isoDatePattern = /\d{4}-\d{2}-\d{2}/g;
 
@@ -14,7 +19,7 @@
   }
 
   $: boundaryDate = sprintBoundaryDate(sprintName);
-  $: if (snapToSprint && boundaryDate && !value) {
+  $: if (showSnapToggle && snapToSprint && boundaryDate && !value) {
     value = boundaryDate;
   }
 
@@ -27,26 +32,41 @@
   }
 </script>
 
-<div class="date-picker">
-  <label class="date-label">
-    Target date
+<div class="date-picker" class:compact>
+  {#if showLabel}
+    <label class="date-label">
+      {label}
+      <input
+        class:error={!!error}
+        type="date"
+        bind:value
+        {disabled}
+        aria-invalid={!!error}
+        aria-label={inputAriaLabel}
+      />
+    </label>
+  {:else}
     <input
       class:error={!!error}
+      class:compact-input={compact}
       type="date"
       bind:value
       {disabled}
       aria-invalid={!!error}
+      aria-label={inputAriaLabel ?? label}
     />
-  </label>
+  {/if}
 
-  <label class="snap-toggle" title={boundaryDate ? `Sprint boundary: ${boundaryDate}` : 'No sprint boundary date available'}>
-    <input type="checkbox" bind:checked={snapToSprint} disabled={disabled} on:change={handleSnapChange} />
-    <span>Snap to sprint boundary</span>
-  </label>
+  {#if showSnapToggle}
+    <label class="snap-toggle" title={boundaryDate ? `Sprint boundary: ${boundaryDate}` : 'No sprint boundary date available'}>
+      <input type="checkbox" bind:checked={snapToSprint} disabled={disabled} on:change={handleSnapChange} />
+      <span>Snap to sprint boundary</span>
+    </label>
+  {/if}
 
-  {#if snapToSprint && boundaryDate}
+  {#if showSnapToggle && snapToSprint && boundaryDate}
     <div class="date-hint">Using sprint boundary {boundaryDate}</div>
-  {:else if snapToSprint}
+  {:else if showSnapToggle && snapToSprint}
     <div class="date-hint muted">No sprint boundary date detected</div>
   {/if}
 
@@ -60,6 +80,10 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .date-picker.compact {
+    gap: 6px;
   }
 
   .date-label {
@@ -82,6 +106,11 @@
     color: var(--text);
     font-family: var(--font-mono);
     font-size: 14px;
+  }
+
+  input[type='date'].compact-input {
+    min-width: 132px;
+    height: 34px;
   }
 
   input[type='date']:focus {

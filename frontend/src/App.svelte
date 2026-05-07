@@ -1,8 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { api, type EpicRecord, type ImportReport } from './lib/api';
   import { project } from './stores/project';
   import { view, type PrimaryView, type RoadmapMode } from './stores/view';
   import Onboarding from './screens/Onboarding.svelte';
+  import ListView from './screens/ListView.svelte';
+
+  let bootstrapping = true;
 
   let onboardingOpen = false;
 
@@ -10,9 +14,33 @@
     event.preventDefault();
   }
 
+  async function hydrateProjectFromBackend() {
+    try {
+      const [epics, report] = await Promise.all([
+        api.get<EpicRecord[]>('/epics').catch(() => []),
+        api.get<ImportReport>('/import/report').catch(() => null),
+      ]);
+
+      if (epics.length === 0) return;
+
+      project.update((current) => ({
+        ...current,
+        status: 'ready',
+        name: report
+          ? `${report.epic_count} epics, ${report.feature_count} features`
+          : `${epics.length} epics loaded`,
+        lastSync: current.lastSync ?? new Date().toISOString(),
+        importReport: report ?? current.importReport,
+      }));
+    } finally {
+      bootstrapping = false;
+    }
+  }
+
   onMount(() => {
     window.addEventListener('dragover', preventDrop);
     window.addEventListener('drop', preventDrop);
+    hydrateProjectFromBackend();
     return () => {
       window.removeEventListener('dragover', preventDrop);
       window.removeEventListener('drop', preventDrop);
@@ -34,11 +62,23 @@
   ];
 
   function setPrimary(primary: PrimaryView) {
-    view.update((c) => ({ ...c, primary }));
+    view.update((current) => {
+      if (primary === 'list') {
+        return { ...current, primary: 'list', roadmapMode: 'list' };
+      }
+      if (primary === 'roadmap') {
+        return { ...current, primary: 'roadmap', roadmapMode: 'gantt' };
+      }
+      return { ...current, primary };
+    });
   }
 
   function setRoadmapMode(roadmapMode: RoadmapMode) {
-    view.update((c) => ({ ...c, roadmapMode }));
+    view.update((current) => ({
+      ...current,
+      primary: roadmapMode === 'list' ? 'list' : 'roadmap',
+      roadmapMode,
+    }));
   }
 
   function openOnboarding() {
@@ -103,8 +143,18 @@
     </header>
 
     <main class="content">
-      {#if onboardingOpen || $project.status === 'not-imported'}
+      {#if bootstrapping}
+        <div class="content-inner">
+          <section class="hero-card">
+            <p class="eyebrow">Loading</p>
+            <h1 class="hero-title">Restoring roadmap state</h1>
+            <p class="hero-copy">Checking the local database for an existing roadmap…</p>
+          </section>
+        </div>
+      {:else if onboardingOpen || $project.status === 'not-imported'}
         <Onboarding on:complete={closeOnboarding} />
+      {:else if $view.primary === 'list'}
+        <ListView />
       {:else}
         <div class="content-inner">
           <section class="hero-card">

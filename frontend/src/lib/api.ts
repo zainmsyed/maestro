@@ -34,7 +34,7 @@ async function parseResponse(response: Response): Promise<unknown> {
   return response.text();
 }
 
-export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const url = `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
   const { body, headers, ...init } = options;
   const response = await fetch(url, {
@@ -96,6 +96,71 @@ export type ImportReport = {
   synthetic_story_ids: string[];
 };
 
+export type StoryRecord = {
+  id: string;
+  feature_id: string;
+  title: string;
+  description: string;
+  status: string;
+  owner: string;
+  sprint: string;
+  story_points: number | null;
+  original_end_date: string | null;
+  committed_end_date: string | null;
+  actual_end_date: string | null;
+  date_source: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FeatureRecord = {
+  id: string;
+  epic_id: string | null;
+  title: string;
+  description: string;
+  status: string;
+  owner: string;
+  sprint: string;
+  story_points: number | null;
+  original_end_date: string | null;
+  committed_end_date: string | null;
+  actual_end_date: string | null;
+  date_source: string;
+  stories: StoryRecord[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type EpicRecord = {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  owner: string;
+  sprint_start: string;
+  sprint_end: string;
+  original_end_date: string | null;
+  committed_end_date: string | null;
+  actual_end_date: string | null;
+  is_synthetic: boolean;
+  features: FeatureRecord[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type AuditRecord = {
+  id: number;
+  entity_type: string;
+  entity_id: string;
+  changed_by: string;
+  old_date: string | null;
+  new_date: string | null;
+  delta_days: number;
+  reason: string | null;
+  changed_at: string;
+  date_source?: string;
+};
+
 type DatePatchResponse = {
   id: string;
   original_end_date: string | null;
@@ -136,7 +201,12 @@ export const api = {
       body: {
         committed_end_date: committedEndDate,
         changed_by: 'pm',
-        reason: 'Assigned during post-import date assignment',
+        reason: 'Assigned during list view editing',
       },
+    }),
+  patchFeatureEpic: (id: string, epicID: string) =>
+    apiFetch<FeatureRecord>(`/features/${id}/epic`, {
+      method: 'PATCH',
+      body: { epic_id: epicID },
     }),
 };

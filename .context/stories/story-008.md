@@ -1,10 +1,10 @@
 # Story 008: List view with inline editing and CSV export
 
-**Status:** in-progress  
+**Status:** completed  
 **Type:** ui
 **Created:** 2026-05-06
 **Last accessed:** 2026-05-07  
-**Completed:** —
+**Completed:** 2026-05-07
 
 ---
 
@@ -36,16 +36,16 @@ Open the List view with test data. Edit a feature's committed date inline and re
 ---
 
 ## Checklist
-- [ ] Create `ListView.svelte` screen shell with topbar integration
-- [ ] Build `DataTable.svelte` with fixed header and scrollable body
-- [ ] Columns: Title, Type, Owner, Sprint, Original Date, Committed Date, Actual Date, Slip Events, Status, Health indicator
-- [ ] Implement inline date editing in Committed Date cells via `DatePicker.svelte`
-- [ ] Add sort toggles on every column header
-- [ ] Build `FilterBar.svelte` with dropdowns for Epic, Owner, Sprint, Status
-- [ ] Implement group-by: Epic (default), Sprint, Owner
-- [ ] Show orphaned features under "Unassigned" group with reassignment dropdown
-- [ ] Add "Export CSV" button that exports the current filtered/sorted/grouped view
-- [ ] Handle empty states and loading states
+- [x] Create `ListView.svelte` screen shell with topbar integration
+- [x] Build `DataTable.svelte` with fixed header and scrollable body
+- [x] Columns: Title, Type, Owner, Sprint, Original Date, Committed Date, Actual Date, Slip Events, Status, Health indicator
+- [x] Implement inline date editing in Committed Date cells via `DatePicker.svelte`
+- [x] Add sort toggles on every column header
+- [x] Build `FilterBar.svelte` with dropdowns for Epic, Owner, Sprint, Status
+- [x] Implement group-by: Epic (default), Sprint, Owner
+- [x] Show orphaned features under "Unassigned" group with reassignment dropdown
+- [x] Add "Export CSV" button that exports the current filtered/sorted/grouped view
+- [x] Handle empty states and loading states
 
 ---
 
@@ -54,3 +54,4 @@ Open the List view with test data. Edit a feature's committed date inline and re
 ---
 
 ## Completion Summary
+Implemented the scoped List view: `ListView.svelte`, `DataTable.svelte`, `FilterBar.svelte`, `GroupBySelect.svelte`, and `csvExport.ts` now load epics plus features, flatten and group them by Epic/Sprint/Owner, sort on every column, filter by Epic/Owner/Sprint/Status, export the current grouped view to CSV, and show loading/empty/error states. Feature rows support inline committed-date editing through the shared `DatePicker.svelte`, and orphaned features under the synthetic unassigned epic can be reassigned inline through the existing feature epic PATCH endpoint. With explicit approval for a scope exception, `App.svelte` was also wired to render `ListView` when the List route/tab is active so story-008 can be visually verified end-to-end.

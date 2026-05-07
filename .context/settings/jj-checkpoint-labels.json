@@ -1,6 +1,7 @@
 {
   "labels": {
     "29689146": "so i was thinking let not ignore the .context folder. that is the point of vazir",
+    "66322739": "i give my approval.",
     "289d4141": "Complete the Vazir bootstrap context drafting using the currently selected Pi mo",
     "07fa49a2": "The user wants to plan their project.\nNo story files are pre-seeded in .context/",
     "083dd5b5": "The user wants to plan their project.\nNo story files are pre-seeded in .context/",
@@ -80,6 +81,30 @@
     "794f04a8": "ok can you reset the db so i can erufy the browse button still works too",
     "9d1705c3": "ok can you reset the db so i can erufy the browse button still works too",
     "bd6bb352": "ok can you reset the db so i can erufy the browse button still works too",
-    "7a284aef": "ok can you reset the db so i can erufy the browse button still works too"
+    "7a284aef": "ok can you reset the db so i can erufy the browse button still works too",
+    "81a7c150": "commit and push",
+    "d6b02602": "Implement the in-progress story in .context/stories/story-008.md.\n\nYour job:\n1. ",
+    "90cb1959": "i give my approval.",
+    "00b064fe": "clicking list isnt doing anything",
+    "8cc47bd8": "nothing is still happening",
+    "5450d270": "sill tnohing and nothing is shoiwng up in the onsole",
+    "e604abc4": "ok good.\n\nare the filters in scope of this story bc they arent workig right now",
+    "812e2505": "they are not working",
+    "410c969a": "still nothing is working. i feel like you are having a lot of issues with this l",
+    "29d789db": "still nothing is working. i feel like you are having a lot of issues with this l",
+    "78a411bb": "in your opinion should we just worry anout functionality right now an leave visu",
+    "fd295d9a": "in your opinion should we just worry anout functionality right now an leave visu",
+    "4f7bd47d": "in your opinion should we just worry anout functionality right now an leave visu",
+    "953b1fbb": "in your opinion should we just worry anout functionality right now an leave visu",
+    "a509fe8c": "can we have the filters update with whats been picked? does tht make sense?",
+    "e5831055": "that is not working",
+    "55d1c13a": "yes i like that. also i attached a screen shot of an epic with only 3 things but",
+    "50edbbb0": "it still not working, and there in not filter picked either as you mentioned you",
+    "34e8c3e5": "can you please retart the server",
+    "04181f1c": "can you please retart the server",
+    "032954cc": "can you show me the jj checkpoints from the last hour",
+    "d8e55582": "can you show me the jj checkpoints from the last hour",
+    "9d950317": "can you show me the jj checkpoints from the last hour",
+    "9d05b2c6": "do we need to restart the server? bc a hard refresh is still showing the same is"
   }
 }
