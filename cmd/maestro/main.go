@@ -2,19 +2,18 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
 
+	"maestro/frontend"
 	"maestro/internal/api"
 	"maestro/internal/config"
 	"maestro/internal/db"
 	"maestro/internal/repository"
 )
-
-const frontendDist = "frontend/dist"
 
 func main() {
 	cfg, err := config.ParseFlags(os.Args[1:])
@@ -31,9 +30,14 @@ func main() {
 	repos := repository.New(database)
 	apiServer := api.New(repos)
 
+	distFS, err := fs.Sub(frontend.Dist, "dist")
+	if err != nil {
+		log.Fatalf("open embedded frontend/dist: %v", err)
+	}
+
 	mux := http.NewServeMux()
 	mux.Handle("/api/", apiServer)
-	mux.HandleFunc("/", serveFrontend(frontendDist))
+	mux.HandleFunc("/", serveSPA(distFS))
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	fmt.Printf("Maestro database initialized at %s (configured port: %d)\n", cfg.DBPath, cfg.Port)
@@ -43,29 +47,30 @@ func main() {
 	}
 }
 
-func serveFrontend(staticDir string) http.HandlerFunc {
-	files := http.FileServer(http.Dir(staticDir))
+func serveSPA(dist fs.FS) http.HandlerFunc {
+	files := http.FileServer(http.FS(dist))
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
 			http.NotFound(w, r)
 			return
 		}
 
-		path := filepath.Clean(strings.TrimPrefix(r.URL.Path, "/"))
-		if path == "." {
-			path = "index.html"
-		}
-		if path == ".." || strings.HasPrefix(path, "../") {
-			http.NotFound(w, r)
-			return
-		}
-
-		candidate := filepath.Join(staticDir, path)
-		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
+		// If the file exists in the embedded FS, serve it directly.
+		if f, err := dist.Open(r.URL.Path[1:]); err == nil {
+			f.Close()
 			files.ServeHTTP(w, r)
 			return
 		}
 
-		http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
+		// Otherwise fall back to index.html for SPA routing.
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		index, err := dist.Open("index.html")
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		defer index.Close()
+		stat, _ := index.Stat()
+		http.ServeContent(w, r, "index.html", stat.ModTime(), index.(io.ReadSeeker))
 	}
 }

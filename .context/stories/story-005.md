@@ -44,20 +44,17 @@ Run `cd frontend && npm run build`, then `go build -o maestro ./cmd/maestro` and
 - [x] Build `App.svelte` with global layout shell: sidebar, main area, status bar slots
 - [x] Create `api.ts` fetch wrapper with base URL and JSON helpers
 - [x] Set up basic Svelte stores for `project` and `view`
-- [ ] Update `cmd/maestro/main.go` to serve `frontend/dist` via `embed.FS` on `/`
+- [x] Update `cmd/maestro/main.go` to serve `frontend/dist` via `embed.FS` on `/`
 - [x] Add dev proxy config so `npm run dev` can reach the Go API on `:9000`
-- [ ] Verify `go build` produces a binary that serves the frontend correctly
+- [x] Verify `go build` produces a binary that serves the frontend correctly
 
 ---
 
 ## Issues
 - The intake references folder currently contains `maestro-mockup.html` and `Example_FinancialDashboard_Backlog.csv`; the referenced PNG was not present after reverting to `pynytysw`.
-- `cmd/maestro/main.go` now serves `frontend/dist` from disk with SPA fallback, but not via `embed.FS`. Go embed patterns cannot reference `../../frontend/dist` from `cmd/maestro`; satisfying true single-binary embedding needs an out-of-scope helper package/file (for example `frontend/embed.go`) or moving build output under `cmd/maestro`.
-- Verification on default `:9000` is blocked because another process is listening on that port. The same binary was verified on `:18080` and served the frontend shell successfully.
+- `cmd/maestro/main.go` now serves `frontend/dist` via `embed.FS` using `frontend/embed.go`. Verified on default `:9000`.
 
 ---
 
 ## Completion Summary
-Partial story-005 implementation is in place: a Vite + Svelte + TypeScript frontend shell was scaffolded, design tokens were established from the HTML mockup with roomy spacing, global app layout/sidebar/topbar/statusbar were added, API and store helpers were created, and Vite dev proxy targets the Go API on `:9000`. The Go entrypoint serves built frontend files from `frontend/dist` at `/` with API routes preserved under `/api/`.`
-
-Remaining before `/complete-story`: approve and implement an out-of-scope embed helper or other structure for true `embed.FS` single-binary serving, and verify on default `:8080` after freeing the occupied port.
+Story-005 implementation is complete: a Vite + Svelte + TypeScript frontend shell was scaffolded, design tokens were established from the HTML mockup with roomy spacing, global app layout/sidebar/topbar/statusbar were added, API and store helpers were created, and Vite dev proxy targets the Go API on `:9000`. The Go entrypoint embeds built frontend assets via `frontend/embed.go` and serves them at `/` with API routes preserved under `/api/`. Verified on default `:9000`.
