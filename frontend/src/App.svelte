@@ -1,6 +1,32 @@
 <script lang="ts">
   import { project } from './stores/project';
   import { view, type PrimaryView, type RoadmapMode } from './stores/view';
+  import DateAssignment from './screens/DateAssignment.svelte';
+  import type { ImportReport } from './lib/api';
+
+  // TODO(story-007): remove /date_screen temporary test mount once onboarding flow is wired
+  const showDateScreen = typeof window !== 'undefined' && window.location.pathname === '/date_screen';
+
+  const mockReport: ImportReport = {
+    epic_count: 3,
+    feature_count: 12,
+    story_count: 28,
+    sprints_detected: ['Sprint 1', 'Sprint 2'],
+    missing_dates_count: 3,
+    missing_sprint_count: 0,
+    orphaned_features: 0,
+    orphaned_stories: 0,
+    skipped_rows: 0,
+    detected_date_format: 'YYYY-MM-DD',
+    date_assignment_candidates: [
+      { row_number: 2, work_item_type: 'story', id: 'S-501', title: 'Build login flow', assigned_owner: 'Alice' },
+      { row_number: 5, work_item_type: 'feature', id: 'F-203', title: 'User dashboard', assigned_owner: 'Bob' },
+      { row_number: 8, work_item_type: 'epic', id: 'E-102', title: 'Platform v2', assigned_owner: 'Charlie' },
+    ],
+    ambiguous_dates: [],
+    warnings: [],
+    synthetic_story_ids: [],
+  };
 
   type NavItem = { id: PrimaryView; label: string; icon: string };
 
@@ -78,7 +104,9 @@
     </header>
 
     <main class="content">
-      {#if $project.status === 'not-imported'}
+      {#if showDateScreen}
+        <DateAssignment report={mockReport} on:done={() => alert('done')} on:skip={() => alert('skipped')} />
+      {:else if $project.status === 'not-imported'}
         <div class="empty-state">
           <div class="empty-card">
             <p class="empty-eyebrow">Getting started</p>

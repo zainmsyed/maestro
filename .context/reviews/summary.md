@@ -1,6 +1,6 @@
 # Review Summary
 
-**Last updated:** 2026-05-07T16:13:31Z
+**Last updated:** 2026-05-07T16:45:51Z
 
 ## Findings
 - Any change to `schema.sql` must be accompanied by a matching update to the schema smoke test (`db_test.go` or equivalent) so that missing tables/indexes are caught in CI. | count: 1 | status: tracked | sources: review-20260506-195853.md | stories: story-002
