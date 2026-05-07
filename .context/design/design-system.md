@@ -14,7 +14,7 @@
 <!-- source: story-005 -->
 - Display: Fraunces, light/medium weights for logo and page titles.
 - UI: DM Mono for navigation, data labels, buttons, and body copy.
-- Base size: 13px, line-height 1.55; labels may use 10–11px uppercase tracking.
+- Base size: 16px, line-height 1.55; labels may use 13px uppercase tracking.
 
 ## Spacing
 <!-- source: story-005 -->

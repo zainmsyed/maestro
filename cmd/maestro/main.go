@@ -55,8 +55,13 @@ func serveSPA(dist fs.FS) http.HandlerFunc {
 			return
 		}
 
+		path := r.URL.Path
+		if path == "/" {
+			path = "/index.html"
+		}
+
 		// If the file exists in the embedded FS, serve it directly.
-		if f, err := dist.Open(r.URL.Path[1:]); err == nil {
+		if f, err := dist.Open(path[1:]); err == nil {
 			f.Close()
 			files.ServeHTTP(w, r)
 			return

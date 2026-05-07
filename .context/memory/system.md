@@ -10,5 +10,5 @@
 
 ## Project Configuration
 - **Default backend port:** `9000` (pinned across Go backend, Vite dev proxy, and documentation).
-- **Vite dev server port:** `9000` (frontend dev).
+- **Vite dev server port:** `9001` (frontend dev).
 - **Go API base URL:** `http://localhost:9000/api`.

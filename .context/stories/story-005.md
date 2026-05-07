@@ -45,7 +45,7 @@ Run `cd frontend && npm run build`, then `go build -o maestro ./cmd/maestro` and
 - [x] Create `api.ts` fetch wrapper with base URL and JSON helpers
 - [x] Set up basic Svelte stores for `project` and `view`
 - [x] Update `cmd/maestro/main.go` to serve `frontend/dist` via `embed.FS` on `/`
-- [x] Add dev proxy config so `npm run dev` can reach the Go API on `:9000`
+- [x] Add dev proxy config so `npm run dev` can reach the Go API on `:9000` (Vite dev server runs on `:9001`)
 - [x] Verify `go build` produces a binary that serves the frontend correctly
 
 ---
