@@ -1,10 +1,10 @@
 # Story 006: Build post-import date assignment screen
 
-**Status:** in-progress
+**Status:** complete  
 **Type:** ui
 **Created:** 2026-05-06
-**Last accessed:** 2026-05-06
-**Completed:** —
+**Last accessed:** 2026-05-07  
+**Completed:** 2026-05-07
 
 ---
 
