@@ -1,6 +1,6 @@
 # Story 005: Scaffold Vite + Svelte frontend
 
-**Status:** in-progress  
+**Status:** completed  
 **Type:** ui
 **Created:** 2026-05-06
 **Last accessed:** 2026-05-07  
