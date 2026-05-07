@@ -3,8 +3,10 @@ package api_test
 import (
 	"bytes"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -655,6 +657,116 @@ func TestImportReport_MultipleSaves(t *testing.T) {
 	json.Unmarshal(rec.Body.Bytes(), &got)
 	if got["epic_count"] != float64(2) {
 		t.Fatalf("expected latest epic_count=2, got %v", got["epic_count"])
+	}
+}
+
+func TestPostImport_Success(t *testing.T) {
+	t.Parallel()
+	server, _ := newTestServer(t)
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	part, _ := writer.CreateFormFile("file", "test.csv")
+	part.Write([]byte(`Parent,ID,Work Item Type,Title 1,Title 2,Title 3,State,Assigned To,Iteration Path,Story Points,Target Date,Area Path
+,E-1,Epic,Epic One,,,Active,Alice,Program\Sprint 1,,2026-05-01,Area
+E-1,F-1,Feature,Feature One,,,Active,Bob,Program\Sprint 1,,2026-05-02,Area
+F-1,S-1,User Story,Story One,,,New,Charlie,Program\Sprint 1,,2026-05-03,Area
+`))
+	writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/import", &body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var got map[string]any
+	json.Unmarshal(rec.Body.Bytes(), &got)
+	if got["epic_count"] != float64(1) || got["feature_count"] != float64(1) || got["story_count"] != float64(1) {
+		t.Fatalf("unexpected report counts: %v", got)
+	}
+}
+
+func TestPostImport_MissingFile(t *testing.T) {
+	t.Parallel()
+	server, _ := newTestServer(t)
+	req := httptest.NewRequest(http.MethodPost, "/api/import", strings.NewReader(""))
+	req.Header.Set("Content-Type", "multipart/form-data; boundary=test")
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestPostImport_NonCsvFilename(t *testing.T) {
+	t.Parallel()
+	server, _ := newTestServer(t)
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	part, _ := writer.CreateFormFile("file", "test.txt")
+	part.Write([]byte("not a csv"))
+	writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/import", &body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestPostImport_Idempotent(t *testing.T) {
+	t.Parallel()
+	server, _ := newTestServer(t)
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	part, _ := writer.CreateFormFile("file", "test.csv")
+	part.Write([]byte(`Parent,ID,Work Item Type,Title 1,Title 2,Title 3,State,Assigned To,Iteration Path,Story Points,Target Date,Area Path
+,E-1,Epic,Epic One,,,Active,Alice,Program\Sprint 1,,2026-05-01,Area
+E-1,F-1,Feature,Feature One,,,Active,Bob,Program\Sprint 1,,2026-05-02,Area
+F-1,S-1,User Story,Story One,,,New,Charlie,Program\Sprint 1,,2026-05-03,Area
+`))
+	writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/import", &body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("first import expected 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var first map[string]any
+	json.Unmarshal(rec.Body.Bytes(), &first)
+	if first["existing_skipped"] != float64(0) {
+		t.Fatalf("first import expected 0 existing_skipped, got %v", first["existing_skipped"])
+	}
+
+	var body2 bytes.Buffer
+	writer2 := multipart.NewWriter(&body2)
+	part2, _ := writer2.CreateFormFile("file", "test.csv")
+	part2.Write([]byte(`Parent,ID,Work Item Type,Title 1,Title 2,Title 3,State,Assigned To,Iteration Path,Story Points,Target Date,Area Path
+,E-1,Epic,Epic One,,,Active,Alice,Program\Sprint 1,,2026-05-01,Area
+E-1,F-1,Feature,Feature One,,,Active,Bob,Program\Sprint 1,,2026-05-02,Area
+F-1,S-1,User Story,Story One,,,New,Charlie,Program\Sprint 1,,2026-05-03,Area
+`))
+	writer2.Close()
+
+	req2 := httptest.NewRequest(http.MethodPost, "/api/import", &body2)
+	req2.Header.Set("Content-Type", writer2.FormDataContentType())
+	rec2 := httptest.NewRecorder()
+	server.ServeHTTP(rec2, req2)
+	if rec2.Code != http.StatusCreated {
+		t.Fatalf("second import expected 201, got %d: %s", rec2.Code, rec2.Body.String())
+	}
+	var second map[string]any
+	json.Unmarshal(rec2.Body.Bytes(), &second)
+	if second["existing_skipped"] != float64(3) {
+		t.Fatalf("second import expected 3 existing_skipped, got %v", second["existing_skipped"])
 	}
 }
 

@@ -25,6 +25,7 @@ func (s *Server) routes() {
 
 	s.mux.HandleFunc("GET /api/audit", s.listAudit)
 
+	s.mux.HandleFunc("POST /api/import", s.postImport)
 	s.mux.HandleFunc("GET /api/import/report", s.getImportReport)
 }
 

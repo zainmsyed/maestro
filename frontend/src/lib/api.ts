@@ -5,7 +5,7 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: BodyInit | JsonBody;
 };
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
@@ -57,6 +57,19 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
 export type WorkItemType = 'epic' | 'feature' | 'story';
 
+export type SprintDraft = {
+  name: string;
+  start_date: string;
+  length_days: number;
+  source: 'imported' | 'generated';
+};
+
+export type ManualSprintConfig = {
+  sprint_length_days: number;
+  first_start_date: string;
+  count: number;
+};
+
 export type DateAssignmentCandidate = {
   row_number: number;
   work_item_type: WorkItemType;
@@ -69,6 +82,7 @@ export type ImportReport = {
   epic_count: number;
   feature_count: number;
   story_count: number;
+  existing_skipped: number;
   sprints_detected: string[];
   missing_dates_count: number;
   missing_sprint_count: number;
@@ -89,13 +103,19 @@ type DatePatchResponse = {
   date_source?: string;
 };
 
-export function typeEndpoint(type: WorkItemType): string {
+function typeEndpoint(type: WorkItemType): string {
   const endpoints: Record<WorkItemType, string> = {
     epic: 'epics',
     feature: 'features',
     story: 'stories',
   };
   return endpoints[type];
+}
+
+export function formatApiError(error: unknown, fallback = 'Request failed.'): string {
+  if (error instanceof ApiError) return error.message;
+  if (error instanceof Error) return error.message;
+  return fallback;
 }
 
 export const api = {
@@ -105,6 +125,11 @@ export const api = {
   patch: <T>(path: string, body?: RequestOptions['body'], options?: RequestOptions) =>
     apiFetch<T>(path, { ...options, method: 'PATCH', body }),
   delete: <T>(path: string, options?: RequestOptions) => apiFetch<T>(path, { ...options, method: 'DELETE' }),
+  importCsv: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return apiFetch<ImportReport>('/import', { method: 'POST', body: form });
+  },
   patchDate: (type: WorkItemType, id: string, committedEndDate: string) =>
     apiFetch<DatePatchResponse>(`/${typeEndpoint(type)}/${id}/date`, {
       method: 'PATCH',

@@ -60,6 +60,26 @@
     "6a66b040": "how do i see that also when are we going to impliment the importer?",
     "5ae5e1b2": "ok thanks I just want to se the sreen so i can verufy it visually and check the ",
     "01a1f1ab": "ok thanks I just want to se the sreen so i can verufy it visually and check the ",
-    "87aeb31f": "ok thanks I just want to se the sreen so i can verufy it visually and check the "
+    "87aeb31f": "ok thanks I just want to se the sreen so i can verufy it visually and check the ",
+    "ff6bc56d": "commit and push. read story 006 for the message",
+    "573a8f84": "Implement the in-progress story in .context/stories/story-007.md.\n\nYour job:\n1. ",
+    "f217ea3d": "Implement the in-progress story in .context/stories/story-007.md.\n\nYour job:\n1. ",
+    "9f24ad45": "how do we test this?",
+    "f6d228ef": "when do we visually verify it? what story?",
+    "0652c6b1": "yes please and wire the import buttons",
+    "950fc1d8": "youre still not telling me how i visually verifyb this!!!!?????",
+    "851ee100": "local host 9000 is already up can we just use that?",
+    "218458d3": "can you jut start it",
+    "bba0bcce": "The import service did not accept the upload. Verify that POST /api/import is av",
+    "6ec03d38": "it looks to be working i uploadedvia browse and made it through all the steps an",
+    "52b1cff6": "index-BT3oaThk.js:2  POST http://localhost:9000/api/import net::ERR_ALPN_NEGOTIA",
+    "1564f5fd": "create epic 501511: insert epic: constraint failed: UNIQUE constraint failed: ep",
+    "d7bc6a6b": "ok that seems to work, but one thing if someone imports something weekly there s",
+    "7e37ce38": "ok can you reset the db so i can erufy the browse button still works too",
+    "ee459e7d": "ok can you reset the db so i can erufy the browse button still works too",
+    "794f04a8": "ok can you reset the db so i can erufy the browse button still works too",
+    "9d1705c3": "ok can you reset the db so i can erufy the browse button still works too",
+    "bd6bb352": "ok can you reset the db so i can erufy the browse button still works too",
+    "7a284aef": "ok can you reset the db so i can erufy the browse button still works too"
   }
 }

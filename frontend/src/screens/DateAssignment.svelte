@@ -158,7 +158,12 @@
         {candidateCount} imported item{candidateCount === 1 ? '' : 's'} need target dates before the roadmap is locked.
       </p>
     </div>
-    <div class="count-pill">{candidateCount} missing</div>
+    <div class="header-actions">
+      <button class="btn-ghost" type="button" disabled={assigning} on:click={skipForLater}>
+        Skip — I'll do it later
+      </button>
+      <div class="count-pill">{candidateCount} missing</div>
+    </div>
   </header>
 
   {#if loading}
@@ -243,6 +248,13 @@
     margin: 12px 0 0;
     color: var(--text2);
     font-size: 15px;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
   }
 
   .count-pill {

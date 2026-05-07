@@ -165,6 +165,11 @@ func (s *importState) ensureUnassignedEpic(ctx context.Context, importer *Import
 	if s.createdEpics[syntheticUnassignedEpicID] {
 		return syntheticUnassignedEpicID, nil
 	}
+	if _, err := importer.repos.Epics.GetByID(ctx, syntheticUnassignedEpicID); err == nil {
+		s.createdEpics[syntheticUnassignedEpicID] = true
+		s.report.ExistingSkipped++
+		return syntheticUnassignedEpicID, nil
+	}
 	epic := &models.Epic{
 		ID:          syntheticUnassignedEpicID,
 		Title:       "Unassigned Epic",
@@ -182,6 +187,11 @@ func (s *importState) ensureUnassignedEpic(ctx context.Context, importer *Import
 
 func (s *importState) ensureUnassignedFeature(ctx context.Context, importer *Importer) (string, error) {
 	if s.createdFeatures[syntheticUnassignedFeatureID] {
+		return syntheticUnassignedFeatureID, nil
+	}
+	if _, err := importer.repos.Features.GetByID(ctx, syntheticUnassignedFeatureID); err == nil {
+		s.createdFeatures[syntheticUnassignedFeatureID] = true
+		s.report.ExistingSkipped++
 		return syntheticUnassignedFeatureID, nil
 	}
 	epicID, err := s.ensureUnassignedEpic(ctx, importer)
@@ -208,6 +218,11 @@ func (s *importState) createEpic(ctx context.Context, importer *Importer, e *raw
 	if s.createdEpics[e.id] {
 		return nil
 	}
+	if _, err := importer.repos.Epics.GetByID(ctx, e.id); err == nil {
+		s.createdEpics[e.id] = true
+		s.report.ExistingSkipped++
+		return nil
+	}
 	original, committed := withDateLocked(e.targetDate)
 	epic := &models.Epic{
 		ID:               e.id,
@@ -230,6 +245,11 @@ func (s *importState) createEpic(ctx context.Context, importer *Importer, e *raw
 
 func (s *importState) createFeature(ctx context.Context, importer *Importer, e *rawEntity, entities map[string]*rawEntity) error {
 	if s.createdFeatures[e.id] {
+		return nil
+	}
+	if _, err := importer.repos.Features.GetByID(ctx, e.id); err == nil {
+		s.createdFeatures[e.id] = true
+		s.report.ExistingSkipped++
 		return nil
 	}
 	parentEpicID := ""
@@ -270,6 +290,11 @@ func (s *importState) createFeature(ctx context.Context, importer *Importer, e *
 
 func (s *importState) createStory(ctx context.Context, importer *Importer, e *rawEntity, entities map[string]*rawEntity) error {
 	if s.createdStories[e.id] {
+		return nil
+	}
+	if _, err := importer.repos.Stories.GetByID(ctx, e.id); err == nil {
+		s.createdStories[e.id] = true
+		s.report.ExistingSkipped++
 		return nil
 	}
 	parentFeatureID := ""

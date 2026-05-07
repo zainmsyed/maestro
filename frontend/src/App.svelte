@@ -1,32 +1,23 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { project } from './stores/project';
   import { view, type PrimaryView, type RoadmapMode } from './stores/view';
-  import DateAssignment from './screens/DateAssignment.svelte';
-  import type { ImportReport } from './lib/api';
+  import Onboarding from './screens/Onboarding.svelte';
 
-  // TODO(story-007): remove /date_screen temporary test mount once onboarding flow is wired
-  const showDateScreen = typeof window !== 'undefined' && window.location.pathname === '/date_screen';
+  let onboardingOpen = false;
 
-  const mockReport: ImportReport = {
-    epic_count: 3,
-    feature_count: 12,
-    story_count: 28,
-    sprints_detected: ['Sprint 1', 'Sprint 2'],
-    missing_dates_count: 3,
-    missing_sprint_count: 0,
-    orphaned_features: 0,
-    orphaned_stories: 0,
-    skipped_rows: 0,
-    detected_date_format: 'YYYY-MM-DD',
-    date_assignment_candidates: [
-      { row_number: 2, work_item_type: 'story', id: 'S-501', title: 'Build login flow', assigned_owner: 'Alice' },
-      { row_number: 5, work_item_type: 'feature', id: 'F-203', title: 'User dashboard', assigned_owner: 'Bob' },
-      { row_number: 8, work_item_type: 'epic', id: 'E-102', title: 'Platform v2', assigned_owner: 'Charlie' },
-    ],
-    ambiguous_dates: [],
-    warnings: [],
-    synthetic_story_ids: [],
-  };
+  function preventDrop(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  onMount(() => {
+    window.addEventListener('dragover', preventDrop);
+    window.addEventListener('drop', preventDrop);
+    return () => {
+      window.removeEventListener('dragover', preventDrop);
+      window.removeEventListener('drop', preventDrop);
+    };
+  });
 
   type NavItem = { id: PrimaryView; label: string; icon: string };
 
@@ -48,6 +39,14 @@
 
   function setRoadmapMode(roadmapMode: RoadmapMode) {
     view.update((c) => ({ ...c, roadmapMode }));
+  }
+
+  function openOnboarding() {
+    onboardingOpen = true;
+  }
+
+  function closeOnboarding() {
+    onboardingOpen = false;
   }
 
   const icons: Record<string, string> = {
@@ -99,24 +98,13 @@
             </button>
           {/each}
         </div>
-        <button class="primary-action" type="button">Import CSV</button>
+        <button class="primary-action" type="button" on:click={openOnboarding}>Import CSV</button>
       </div>
     </header>
 
     <main class="content">
-      {#if showDateScreen}
-        <DateAssignment report={mockReport} on:done={() => alert('done')} on:skip={() => alert('skipped')} />
-      {:else if $project.status === 'not-imported'}
-        <div class="empty-state">
-          <div class="empty-card">
-            <p class="empty-eyebrow">Getting started</p>
-            <h1 class="empty-title">No roadmap loaded</h1>
-            <p class="empty-body">
-              Import an Azure DevOps Tree of Work Items CSV to build your first roadmap.
-            </p>
-            <button class="empty-cta" type="button">Import CSV</button>
-          </div>
-        </div>
+      {#if onboardingOpen || $project.status === 'not-imported'}
+        <Onboarding on:complete={closeOnboarding} />
       {:else}
         <div class="content-inner">
           <section class="hero-card">

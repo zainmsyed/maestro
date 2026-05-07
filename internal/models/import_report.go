@@ -6,6 +6,7 @@ type ImportReport struct {
 	EpicCount                int                       `json:"epic_count"`
 	FeatureCount             int                       `json:"feature_count"`
 	StoryCount               int                       `json:"story_count"`
+	ExistingSkipped          int                       `json:"existing_skipped"`
 	SprintsDetected          []string                  `json:"sprints_detected"`
 	MissingDatesCount        int                       `json:"missing_dates_count"`
 	MissingSprintCount       int                       `json:"missing_sprint_count"`
