@@ -13,6 +13,9 @@ type FeatureRepository interface {
 	Create(context.Context, *models.Feature) error
 	GetByID(context.Context, string) (*models.Feature, error)
 	List(context.Context) ([]models.Feature, error)
+	ListByEpicID(context.Context, string) ([]models.Feature, error)
+	UpdateDate(context.Context, string, *time.Time, *time.Time, string) error
+	UpdateEpicID(context.Context, string, *string) error
 }
 
 type SQLiteFeatureRepository struct{ db *sql.DB }
@@ -81,6 +84,57 @@ func (r *SQLiteFeatureRepository) List(ctx context.Context) ([]models.Feature, e
 		return nil, fmt.Errorf("iterate features: %w", err)
 	}
 	return features, nil
+}
+
+func (r *SQLiteFeatureRepository) ListByEpicID(ctx context.Context, epicID string) ([]models.Feature, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT id, epic_id, title, description, status, owner, sprint,
+		       original_end_date, committed_end_date, actual_end_date,
+		       story_points, date_source, created_at, updated_at
+		FROM features WHERE epic_id = ? ORDER BY id
+	`, epicID)
+	if err != nil {
+		return nil, fmt.Errorf("list features by epic: %w", err)
+	}
+	defer rows.Close()
+
+	var features []models.Feature
+	for rows.Next() {
+		feature, err := scanFeature(rows)
+		if err != nil {
+			return nil, err
+		}
+		features = append(features, *feature)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate features by epic: %w", err)
+	}
+	return features, nil
+}
+
+func (r *SQLiteFeatureRepository) UpdateDate(ctx context.Context, id string, original, committed *time.Time, dateSource string) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE features SET
+			original_end_date = ?,
+			committed_end_date = ?,
+			date_source = ?,
+			updated_at = ?
+		WHERE id = ?
+	`, formatDatePtr(original), formatDatePtr(committed), dateSource, formatTimestamp(time.Now().UTC()), id)
+	if err != nil {
+		return fmt.Errorf("update feature date: %w", err)
+	}
+	return nil
+}
+
+func (r *SQLiteFeatureRepository) UpdateEpicID(ctx context.Context, id string, epicID *string) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE features SET epic_id = ?, updated_at = ? WHERE id = ?
+	`, epicID, formatTimestamp(time.Now().UTC()), id)
+	if err != nil {
+		return fmt.Errorf("update feature epic: %w", err)
+	}
+	return nil
 }
 
 func scanFeature(s scanner) (*models.Feature, error) {

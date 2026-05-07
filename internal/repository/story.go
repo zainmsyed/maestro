@@ -13,6 +13,9 @@ type StoryRepository interface {
 	Create(context.Context, *models.Story) error
 	GetByID(context.Context, string) (*models.Story, error)
 	List(context.Context) ([]models.Story, error)
+	ListByFeatureID(context.Context, string) ([]models.Story, error)
+	UpdateDate(context.Context, string, *time.Time, *time.Time, string) error
+	UpdateFeatureID(context.Context, string, string) error
 }
 
 type SQLiteStoryRepository struct{ db *sql.DB }
@@ -81,6 +84,57 @@ func (r *SQLiteStoryRepository) List(ctx context.Context) ([]models.Story, error
 		return nil, fmt.Errorf("iterate stories: %w", err)
 	}
 	return stories, nil
+}
+
+func (r *SQLiteStoryRepository) ListByFeatureID(ctx context.Context, featureID string) ([]models.Story, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT id, feature_id, title, description, status, owner, sprint,
+		       original_end_date, committed_end_date, actual_end_date,
+		       story_points, date_source, created_at, updated_at
+		FROM stories WHERE feature_id = ? ORDER BY id
+	`, featureID)
+	if err != nil {
+		return nil, fmt.Errorf("list stories by feature: %w", err)
+	}
+	defer rows.Close()
+
+	var stories []models.Story
+	for rows.Next() {
+		story, err := scanStory(rows)
+		if err != nil {
+			return nil, err
+		}
+		stories = append(stories, *story)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate stories by feature: %w", err)
+	}
+	return stories, nil
+}
+
+func (r *SQLiteStoryRepository) UpdateDate(ctx context.Context, id string, original, committed *time.Time, dateSource string) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE stories SET
+			original_end_date = ?,
+			committed_end_date = ?,
+			date_source = ?,
+			updated_at = ?
+		WHERE id = ?
+	`, formatDatePtr(original), formatDatePtr(committed), dateSource, formatTimestamp(time.Now().UTC()), id)
+	if err != nil {
+		return fmt.Errorf("update story date: %w", err)
+	}
+	return nil
+}
+
+func (r *SQLiteStoryRepository) UpdateFeatureID(ctx context.Context, id, featureID string) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE stories SET feature_id = ?, updated_at = ? WHERE id = ?
+	`, featureID, formatTimestamp(time.Now().UTC()), id)
+	if err != nil {
+		return fmt.Errorf("update story feature: %w", err)
+	}
+	return nil
 }
 
 func scanStory(s scanner) (*models.Story, error) {

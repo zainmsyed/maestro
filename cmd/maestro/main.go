@@ -5,8 +5,10 @@ import (
 	"log"
 	"os"
 
+	"maestro/internal/api"
 	"maestro/internal/config"
 	"maestro/internal/db"
+	"maestro/internal/repository"
 )
 
 func main() {
@@ -21,5 +23,12 @@ func main() {
 	}
 	defer database.Close()
 
+	repos := repository.New(database)
+	server := api.New(repos)
+
+	addr := fmt.Sprintf(":%d", cfg.Port)
 	fmt.Printf("Maestro database initialized at %s (configured port: %d)\n", cfg.DBPath, cfg.Port)
+	if err := server.ListenAndServe(addr); err != nil {
+		log.Fatalf("server error: %v", err)
+	}
 }

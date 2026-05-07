@@ -83,3 +83,9 @@ CREATE INDEX IF NOT EXISTS idx_date_audit_logs_entity ON date_audit_logs(entity_
 CREATE INDEX IF NOT EXISTS idx_date_audit_logs_changed_at ON date_audit_logs(changed_at);
 CREATE INDEX IF NOT EXISTS idx_stories_feature_id ON stories(feature_id);
 CREATE INDEX IF NOT EXISTS idx_stories_sprint ON stories(sprint);
+
+CREATE TABLE IF NOT EXISTS import_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"maestro/internal/models"
 	"maestro/internal/repository"
 )
 
@@ -17,39 +18,9 @@ type Importer struct {
 	repos repository.Repositories
 }
 
-type ImportReport struct {
-	EpicCount                int
-	FeatureCount             int
-	StoryCount               int
-	SprintsDetected          []string
-	MissingDatesCount        int
-	MissingSprintCount       int
-	OrphanedFeatures         int
-	OrphanedStories          int
-	SkippedRows              int
-	DetectedDateFormat       string
-	DateAssignmentCandidates []DateAssignmentCandidate
-	AmbiguousDates           []AmbiguousDateCandidate
-	Warnings                 []string
-	SyntheticStoryIDs        []string
-}
-
-type DateAssignmentCandidate struct {
-	RowNumber     int
-	WorkItemType  string
-	ID            string
-	Title         string
-	AssignedOwner string
-}
-
-type AmbiguousDateCandidate struct {
-	RowNumber    int
-	WorkItemType string
-	ID           string
-	Title        string
-	RawDate      string
-	ParsedDate   time.Time
-}
+type ImportReport = models.ImportReport
+type DateAssignmentCandidate = models.DateAssignmentCandidate
+type AmbiguousDateCandidate = models.AmbiguousDateCandidate
 
 type assignedTo struct {
 	DisplayName string
