@@ -193,8 +193,7 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    width: min(1320px, 100%);
-    margin: 0 auto;
+    width: 100%;
   }
 
   .screen-header {

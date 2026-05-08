@@ -82,3 +82,10 @@ frontend/src/lib/listView.test.ts — Unit tests for flatten, filter, group, sor
 frontend/src/lib/csvExport.test.ts — Unit tests for CSV escaping and row building edge cases
 
 frontend/src/components/DateSourceBadge.svelte — (undescribed)
+frontend/src/components/GanttBar.svelte — (undescribed)
+frontend/src/components/GanttGrid.svelte — (undescribed)
+frontend/src/components/RowLabels.svelte — (undescribed)
+frontend/src/components/SprintHeader.svelte — (undescribed)
+frontend/src/components/TodayLine.svelte — (undescribed)
+frontend/src/lib/ganttLayout.ts — (undescribed)
+frontend/src/screens/GanttView.svelte — (undescribed)

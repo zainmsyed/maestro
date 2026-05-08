@@ -5,6 +5,7 @@
   import { view, type PrimaryView, type RoadmapMode } from './stores/view';
   import Onboarding from './screens/Onboarding.svelte';
   import ListView from './screens/ListView.svelte';
+  import GanttView from './screens/GanttView.svelte';
 
   let bootstrapping = true;
 
@@ -155,13 +156,17 @@
         <Onboarding on:complete={closeOnboarding} />
       {:else if $view.primary === 'list'}
         <ListView />
+      {:else if $view.primary === 'roadmap' && $view.roadmapMode === 'gantt'}
+        <GanttView />
+      {:else if $view.primary === 'roadmap' && $view.roadmapMode === 'list'}
+        <ListView />
       {:else}
         <div class="content-inner">
           <section class="hero-card">
-            <p class="eyebrow">Roadmap</p>
-            <h1 class="hero-title">{$project.name}</h1>
+            <p class="eyebrow">{$view.primary}</p>
+            <h1 class="hero-title">Coming soon</h1>
             <p class="hero-copy">
-              The roadmap canvas will appear here once the relevant screen stories are implemented.
+              This workspace area has not been implemented yet. Use Roadmap or List for the current planning views.
             </p>
           </section>
 

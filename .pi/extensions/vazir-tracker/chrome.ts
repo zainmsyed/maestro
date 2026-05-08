@@ -718,46 +718,46 @@ function branchLabel(cwd: string): string {
     return isVazirInitialized(cwd) ? "no-git" : "run /vazir-init";
   }
 
-  try {
+  if (_useJJ) {
     try {
-      const branch = childProcess.execSync("git rev-parse --abbrev-ref HEAD", { cwd, encoding: "utf-8", stdio: "pipe" }).toString().trim();
-      if (branch && branch !== "HEAD") return clipInline(branch, 24);
-
-      if (branch === "HEAD") {
-        try {
-          const sha = childProcess.execSync("git rev-parse --short HEAD", { cwd, encoding: "utf-8", stdio: "pipe" }).trim();
-          if (sha) return clipInline(`detached@${sha}`, 24);
-        } catch {
-          // ignore
-        }
-        // Empty repo (no commits yet) — symbolic-ref gives the configured default branch name.
-        try {
-          const symRef = childProcess.execSync("git symbolic-ref --short HEAD", { cwd, encoding: "utf-8", stdio: "pipe" }).trim();
-          if (symRef) return clipInline(symRef, 24);
-        } catch {
-          // ignore
-        }
+      let label = childProcess.execSync("jj bookmark list -r @", { cwd, encoding: "utf-8", stdio: "pipe" }).trim();
+      if (!label) {
+        label = childProcess.execSync("jj bookmark list -r @-", { cwd, encoding: "utf-8", stdio: "pipe" }).trim();
+      }
+      if (label) {
+        const match = label.match(/^(\S+):/);
+        if (match) return clipInline(match[1], 24);
       }
     } catch {
-      // git not available; fall through to JJ
+      /* ignore */
     }
+    return "jj";
+  }
 
-    if (_useJJ) {
+  try {
+    const branch = childProcess.execSync("git rev-parse --abbrev-ref HEAD", { cwd, encoding: "utf-8", stdio: "pipe" }).toString().trim();
+    if (branch && branch !== "HEAD") return clipInline(branch, 24);
+
+    if (branch === "HEAD") {
       try {
-        const label = childProcess.execSync("jj bookmark list --revision @ --no-graph", { cwd, encoding: "utf-8", stdio: "pipe" }).trim();
-        if (label) return clipInline(label, 24);
+        const sha = childProcess.execSync("git rev-parse --short HEAD", { cwd, encoding: "utf-8", stdio: "pipe" }).trim();
+        if (sha) return clipInline(`detached@${sha}`, 24);
       } catch {
         // ignore
       }
-      return "jj";
+      // Empty repo (no commits yet) — symbolic-ref gives the configured default branch name.
+      try {
+        const symRef = childProcess.execSync("git symbolic-ref --short HEAD", { cwd, encoding: "utf-8", stdio: "pipe" }).trim();
+        if (symRef) return clipInline(symRef, 24);
+      } catch {
+        // ignore
+      }
     }
-
-    return "workspace";
   } catch {
-    /* ignore VCS label lookup */
+    // git not available
   }
 
-  return _useJJ ? "jj" : "workspace";
+  return "workspace";
 }
 
 function repoNameLabel(cwd: string): string {
@@ -924,7 +924,14 @@ function sessionFooterLine(
 
   const summary = storyProgressSummary(cwd);
   const storyLabel = summary?.slug ?? "no active story";
-  const branch = clipInline(_hasGitRepo ? (footerData.getGitBranch() ?? branchLabel(cwd)) : branchLabel(cwd), 24);
+  const branch = clipInline(
+    _useJJ
+      ? branchLabel(cwd)
+      : _hasGitRepo
+        ? (footerData.getGitBranch() ?? branchLabel(cwd))
+        : branchLabel(cwd),
+    24
+  );
   const branchWithStatus = `${paint(branch, "branch")}${separatorDot()}${footerGitStatusSegment()}`;
   const branchLabelSegment = paint(branch, "branch");
   const repoLabel = clipInline(repoNameLabel(cwd).replace(/-pi$/, ""), 12);
