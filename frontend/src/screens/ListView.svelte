@@ -22,11 +22,10 @@
   let error: string | null = null;
   let epics: EpicRecord[] = [];
   let audits: AuditRecord[] = [];
-  let filters: FilterState = { epic: '', owner: '', sprint: '', status: '' };
+  let filters: FilterState = { epic: '', owner: '', sprint: '', status: '', type: '' };
   let groupBy: GroupBy = 'epic';
   let sortKey: SortKey = 'title';
   let sortDirection: 'asc' | 'desc' = 'asc';
-
 
   function sortBy(key: SortKey) {
     if (sortKey === key) {
@@ -57,7 +56,7 @@
   async function saveDate(row: ListRow, committedDate: string) {
     savingDateId = row.id;
     try {
-      await api.patchDate('feature', row.id, committedDate);
+      await api.patchDate(row.type, row.id, committedDate);
       await load();
     } catch (err) {
       error = formatApiError(err, 'Could not save committed date.');
@@ -72,6 +71,15 @@
       await load();
     } catch (err) {
       error = formatApiError(err, 'Could not reassign feature.');
+    }
+  }
+
+  async function reassignStory(row: ListRow, featureID: string) {
+    try {
+      await api.patchStoryFeature(row.id, featureID);
+      await load();
+    } catch (err) {
+      error = formatApiError(err, 'Could not reassign story.');
     }
   }
 
@@ -91,11 +99,9 @@
     owner: { accessor: (r) => r.owner, filterEmpty: true },
     sprint: { accessor: (r) => r.sprint, fallback: 'Unassigned', filterEmpty: false },
     status: { accessor: (r) => r.status, filterEmpty: true },
+    type: { accessor: (r) => r.type, filterEmpty: true },
   };
 
-  // Build options for one filter key from rows filtered by ALL OTHER keys.
-  // This gives true cascading: picking an epic narrows Owner/Sprint/Status,
-  // but the Epic dropdown still shows every epic that matches the other picks.
   function optionsForKey(
     key: keyof FilterState,
     rows: ListRow[],
@@ -120,8 +126,12 @@
   $: ownerOptions = optionsForKey('owner', flatRows, filters);
   $: sprintOptions = optionsForKey('sprint', flatRows, filters);
   $: statusOptions = optionsForKey('status', flatRows, filters);
+  $: typeOptions = optionsForKey('type', flatRows, filters);
 
-  $: reassignOptions = epics.filter((epic) => !epic.is_synthetic).map((epic) => ({ id: epic.id, title: epic.title }));
+  $: reassignEpicOptions = epics.filter((epic) => !epic.is_synthetic).map((epic) => ({ id: epic.id, title: epic.title }));
+  $: reassignFeatureOptions = flatRows
+    .filter((row) => row.type === 'feature' && !row.isSynthetic)
+    .map((row) => ({ id: row.id, title: row.title }));
 
   function handleFilterChange(next: FilterState) {
     filters = next;
@@ -142,6 +152,7 @@
     <div class="header-summary">
       <div><span>{filteredRows.filter((row) => row.type === 'epic').length}</span><small>Epics</small></div>
       <div><span>{filteredRows.filter((row) => row.type === 'feature').length}</span><small>Features</small></div>
+      <div><span>{filteredRows.filter((row) => row.type === 'story').length}</span><small>Stories</small></div>
       <div><span>{groupedRows.length}</span><small>Groups</small></div>
     </div>
   </div>
@@ -154,6 +165,7 @@
     {ownerOptions}
     {sprintOptions}
     {statusOptions}
+    {typeOptions}
     onExport={exportCurrentView}
   />
 
@@ -167,10 +179,12 @@
     {sortDirection}
     {loading}
     {savingDateId}
-    epicOptions={reassignOptions}
+    epicOptions={reassignEpicOptions}
+    featureOptions={reassignFeatureOptions}
     onSort={sortBy}
     onSaveDate={saveDate}
     onReassignFeature={reassignFeature}
+    onReassignStory={reassignStory}
   />
 </section>
 
@@ -217,7 +231,7 @@
 
   .header-summary {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
   }
 

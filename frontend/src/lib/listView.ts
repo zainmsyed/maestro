@@ -6,7 +6,7 @@ export type HealthTone = 'green' | 'amber' | 'red' | 'blue';
 
 export type ListRow = {
   id: string;
-  type: 'epic' | 'feature';
+  type: 'epic' | 'feature' | 'story';
   title: string;
   owner: string;
   sprint: string;
@@ -19,7 +19,11 @@ export type ListRow = {
   healthLabel: string;
   epicId: string | null;
   epicTitle: string;
+  featureId: string | null;
+  featureTitle: string;
   isSynthetic: boolean;
+  dateSource: string;
+  storyPoints: number | null;
 };
 
 export type ListGroup = { key: string; label: string; rows: ListRow[] };
@@ -29,6 +33,7 @@ export type FilterState = {
   owner: string;
   sprint: string;
   status: string;
+  type: string;
 };
 
 function normalizeDate(value: string | null | undefined): string {
@@ -66,7 +71,42 @@ export function flattenRows(epicList: EpicRecord[], auditList: AuditRecord[]): L
   }
 
   return epicList.flatMap((epic) => {
-    const featureRows = epic.features.map((feature) => {
+    const featureRows = epic.features.flatMap((feature) => {
+      const storyRows = (feature.stories ?? []).map((story) => {
+        const originalDate = normalizeDate(story.original_end_date);
+        const committedDate = normalizeDate(story.committed_end_date);
+        const actualDate = normalizeDate(story.actual_end_date);
+        const slipEvents = slipCounts.get(`story:${story.id}`) ?? 0;
+        const health = deriveHealth({
+          status: story.status,
+          originalDate,
+          committedDate,
+          actualDate,
+          slipEvents,
+        });
+        return {
+          id: story.id,
+          type: 'story' as const,
+          title: story.title,
+          owner: story.owner,
+          sprint: story.sprint,
+          originalDate,
+          committedDate,
+          actualDate,
+          slipEvents,
+          status: story.status,
+          health: health.tone,
+          healthLabel: health.label,
+          epicId: epic.id,
+          epicTitle: epic.title,
+          featureId: feature.id,
+          featureTitle: feature.title,
+          isSynthetic: epic.is_synthetic,
+          dateSource: story.date_source,
+          storyPoints: story.story_points,
+        };
+      });
+
       const originalDate = normalizeDate(feature.original_end_date);
       const committedDate = normalizeDate(feature.committed_end_date);
       const actualDate = normalizeDate(feature.actual_end_date);
@@ -78,7 +118,7 @@ export function flattenRows(epicList: EpicRecord[], auditList: AuditRecord[]): L
         actualDate,
         slipEvents,
       });
-      return {
+      const featureRow: ListRow = {
         id: feature.id,
         type: 'feature' as const,
         title: feature.title,
@@ -93,8 +133,14 @@ export function flattenRows(epicList: EpicRecord[], auditList: AuditRecord[]): L
         healthLabel: health.label,
         epicId: epic.id,
         epicTitle: epic.title,
+        featureId: null,
+        featureTitle: '',
         isSynthetic: epic.is_synthetic,
+        dateSource: feature.date_source,
+        storyPoints: feature.story_points,
       };
+
+      return [featureRow, ...storyRows];
     });
 
     const originalDate = normalizeDate(epic.original_end_date);
@@ -109,26 +155,29 @@ export function flattenRows(epicList: EpicRecord[], auditList: AuditRecord[]): L
       slipEvents,
     });
 
-    return [
-      {
-        id: epic.id,
-        type: 'epic' as const,
-        title: epic.title,
-        owner: epic.owner,
-        sprint: epic.sprint_end,
-        originalDate,
-        committedDate,
-        actualDate,
-        slipEvents,
-        status: epic.status,
-        health: health.tone,
-        healthLabel: health.label,
-        epicId: epic.id,
-        epicTitle: epic.title,
-        isSynthetic: epic.is_synthetic,
-      },
-      ...featureRows,
-    ];
+    const epicRow: ListRow = {
+      id: epic.id,
+      type: 'epic' as const,
+      title: epic.title,
+      owner: epic.owner,
+      sprint: epic.sprint_end,
+      originalDate,
+      committedDate,
+      actualDate,
+      slipEvents,
+      status: epic.status,
+      health: health.tone,
+      healthLabel: health.label,
+      epicId: epic.id,
+      epicTitle: epic.title,
+      featureId: null,
+      featureTitle: '',
+      isSynthetic: epic.is_synthetic,
+      dateSource: '',
+      storyPoints: null,
+    };
+
+    return [epicRow, ...featureRows];
   });
 }
 
@@ -180,6 +229,7 @@ const filterPredicates: Record<keyof FilterState, (row: ListRow, value: string) 
   owner: (row, value) => row.owner === value,
   sprint: (row, value) => (row.sprint || 'Unassigned') === value,
   status: (row, value) => row.status === value,
+  type: (row, value) => row.type === value,
 };
 
 export function filterRows(rows: ListRow[], activeFilters: FilterState): ListRow[] {
@@ -211,12 +261,22 @@ function groupByEpic(rows: ListRow[], activeSortKey: SortKey, activeSortDirectio
   return [...epicMap.values()].map((group) => {
     const epicRow = group.rows.find((row) => row.type === 'epic');
     const featureRows = group.rows.filter((row) => row.type === 'feature');
-    return {
-      ...group,
-      rows: epicRow
-        ? [epicRow, ...sortRows(featureRows, activeSortKey, activeSortDirection)]
-        : featureRows,
-    };
+    const storyRows = group.rows.filter((row) => row.type === 'story');
+
+    const sortedFeatures = sortRows(featureRows, activeSortKey, activeSortDirection);
+    const orderedRows: ListRow[] = [];
+
+    if (epicRow) {
+      orderedRows.push(epicRow);
+    }
+
+    for (const feature of sortedFeatures) {
+      orderedRows.push(feature);
+      const children = storyRows.filter((s) => s.featureId === feature.id);
+      orderedRows.push(...sortRows(children, activeSortKey, activeSortDirection));
+    }
+
+    return { ...group, rows: orderedRows };
   });
 }
 
@@ -261,6 +321,8 @@ export function buildExportRows(groups: ListGroup[], groupBy: GroupBy): Array<Re
       original_date: row.originalDate || '',
       committed_date: row.committedDate || '',
       actual_date: row.actualDate || '',
+      story_points: row.storyPoints ?? '',
+      date_source: row.dateSource,
       slip_events: row.slipEvents,
       status: row.status || '',
       health: row.healthLabel,

@@ -1,5 +1,6 @@
 <script lang="ts">
   import DatePicker from './DatePicker.svelte';
+  import DateSourceBadge from './DateSourceBadge.svelte';
   import type { ListGroup, ListRow, SortKey } from '../lib/listView';
 
   export let groups: ListGroup[] = [];
@@ -8,9 +9,11 @@
   export let loading = false;
   export let savingDateId: string | null = null;
   export let epicOptions: Array<{ id: string; title: string }> = [];
+  export let featureOptions: Array<{ id: string; title: string }> = [];
   export let onSort: (key: SortKey) => void;
   export let onSaveDate: (row: ListRow, date: string) => void;
   export let onReassignFeature: (row: ListRow, epicID: string) => void;
+  export let onReassignStory: (row: ListRow, featureID: string) => void;
 
   const columns: Array<{ key: SortKey; label: string }> = [
     { key: 'title', label: 'Title' },
@@ -20,13 +23,23 @@
     { key: 'original', label: 'Original Date' },
     { key: 'committed', label: 'Committed Date' },
     { key: 'actual', label: 'Actual Date' },
-    { key: 'slip', label: 'Slip Events' },
     { key: 'status', label: 'Status' },
     { key: 'health', label: 'Health' },
+    { key: 'slip', label: 'Slip Events' },
   ];
 
   let editingId: string | null = null;
   let editingDate = '';
+  let collapsedEpics: Record<string, boolean> = {};
+  let collapsedFeatures: Record<string, boolean> = {};
+
+  function toggleEpic(epicId: string) {
+    collapsedEpics = { ...collapsedEpics, [epicId]: !collapsedEpics[epicId] };
+  }
+
+  function toggleFeature(featureId: string) {
+    collapsedFeatures = { ...collapsedFeatures, [featureId]: !collapsedFeatures[featureId] };
+  }
 
   function beginEdit(row: ListRow) {
     editingId = row.id;
@@ -44,16 +57,30 @@
     editingId = null;
   }
 
-  function reassign(row: ListRow, event: Event) {
+  function reassignFeature(row: ListRow, event: Event) {
     const select = event.currentTarget as HTMLSelectElement;
     if (!select.value) return;
     onReassignFeature(row, select.value);
+  }
+
+  function reassignStory(row: ListRow, event: Event) {
+    const select = event.currentTarget as HTMLSelectElement;
+    if (!select.value) return;
+    onReassignStory(row, select.value);
   }
 
   function sortLabel(key: SortKey): string {
     if (sortKey !== key) return '';
     return sortDirection === 'asc' ? ' ↑' : ' ↓';
   }
+
+  function indentClass(type: ListRow['type']): string {
+    if (type === 'story') return 'indent-story';
+    if (type === 'feature') return 'indent-feature';
+    return '';
+  }
+
+
 </script>
 
 <section class="data-table" aria-label="Roadmap list table">
@@ -73,73 +100,131 @@
                 </button>
               </th>
             {/each}
+            <th scope="col" class="col-numeric">Story Points</th>
+            <th scope="col">Date Source</th>
           </tr>
         </thead>
         <tbody>
           {#each groups as group}
             <tr class="group-row">
-              <td colspan={columns.length}>{group.label}</td>
+              <td colspan={columns.length + 2}>{group.label}</td>
             </tr>
-            {#each group.rows as row}
-              <tr class:feature-row={row.type === 'feature'} class:synthetic={row.isSynthetic}>
-                <td>
-                  <div class="title-cell" class:indented={row.type === 'feature'}>
-                    <span class="title-text">{row.title}</span>
-                    {#if row.type === 'feature' && row.isSynthetic}
-                      <label class="reassign-label">
-                        <span>Reassign</span>
-                        <select on:change={(event) => reassign(row, event)}>
-                          <option value="">Choose epic</option>
-                          {#each epicOptions as option}
-                            <option value={option.id}>{option.title}</option>
-                          {/each}
-                        </select>
-                      </label>
-                    {/if}
-                  </div>
-                </td>
-                <td><span class="type-pill">{row.type}</span></td>
-                <td>{row.owner || '—'}</td>
-                <td>{row.sprint || 'Unassigned'}</td>
-                <td>{row.originalDate || '—'}</td>
-                <td>
-                  {#if row.type === 'feature'}
-                    {#if editingId === row.id}
-                      <div class="edit-cell">
-                        <DatePicker
-                          bind:value={editingDate}
-                          showLabel={false}
-                          showSnapToggle={false}
-                          compact={true}
-                          label="Committed date"
-                          inputAriaLabel={`Committed date for ${row.title}`}
-                          disabled={savingDateId === row.id}
-                        />
-                        <div class="edit-actions">
-                          <button class="cell-action primary" type="button" disabled={!editingDate || savingDateId === row.id} on:click={() => saveEdit(row)}>
-                            Save
-                          </button>
-                          <button class="cell-action" type="button" disabled={savingDateId === row.id} on:click={cancelEdit}>
-                            Cancel
-                          </button>
+            {#each group.rows as row, rowIndex}
+              {#if row.type === 'epic' || (row.type === 'feature' && !collapsedEpics[row.epicId ?? 'none']) || (row.type === 'story' && !collapsedEpics[row.epicId ?? 'none'] && !collapsedFeatures[row.featureId ?? 'none'])}
+                <tr
+                  class:feature-row={row.type === 'feature'}
+                  class:story-row={row.type === 'story'}
+                  class:synthetic={row.isSynthetic}
+                >
+                  <td>
+                    <div class="title-cell {indentClass(row.type)}">
+                      {#if row.type === 'epic'}
+                        <button
+                          type="button"
+                          class="expand-toggle"
+                          on:click={() => toggleEpic(row.id)}
+                          aria-label={!collapsedEpics[row.id] ? 'Collapse epic' : 'Expand epic'}
+                        >
+                          {!collapsedEpics[row.id] ? '▼' : '▶'}
+                        </button>
+                      {:else if row.type === 'feature'}
+                        <button
+                          type="button"
+                          class="expand-toggle"
+                          on:click={() => toggleFeature(row.id)}
+                          aria-label={!collapsedFeatures[row.id] ? 'Collapse feature' : 'Expand feature'}
+                        >
+                          {!collapsedFeatures[row.id] ? '▼' : '▶'}
+                        </button>
+                      {:else}
+                        <span class="expand-spacer"></span>
+                      {/if}
+                      <span class="title-text">{row.title}</span>
+                      {#if row.type === 'feature' && row.isSynthetic}
+                        <label class="reassign-label">
+                          <span>Reassign</span>
+                          <select on:change={(event) => reassignFeature(row, event)}>
+                            <option value="">Choose epic</option>
+                            {#each epicOptions as option}
+                              <option value={option.id}>{option.title}</option>
+                            {/each}
+                          </select>
+                        </label>
+                      {/if}
+                      {#if row.type === 'story' && row.isSynthetic}
+                        <label class="reassign-label">
+                          <span>Reassign</span>
+                          <select on:change={(event) => reassignStory(row, event)}>
+                            <option value="">Choose feature</option>
+                            {#each featureOptions as option}
+                              <option value={option.id}>{option.title}</option>
+                            {/each}
+                          </select>
+                        </label>
+                      {/if}
+                    </div>
+                  </td>
+                  <td><span class="type-pill type-{row.type}">{row.type}</span></td>
+                  <td>{row.owner || '—'}</td>
+                  <td>{row.sprint || 'Unassigned'}</td>
+                  <td>{row.originalDate || '—'}</td>
+                  <td>
+                    {#if row.type !== 'epic'}
+                      {#if editingId === row.id}
+                        <div class="edit-cell">
+                          <DatePicker
+                            bind:value={editingDate}
+                            showLabel={false}
+                            showSnapToggle={false}
+                            compact={true}
+                            label="Committed date"
+                            inputAriaLabel={`Committed date for ${row.title}`}
+                            disabled={savingDateId === row.id}
+                          />
+                          <div class="edit-actions">
+                            <button
+                              class="cell-action primary"
+                              type="button"
+                              disabled={!editingDate || savingDateId === row.id}
+                              on:click={() => saveEdit(row)}
+                            >
+                              Save
+                            </button>
+                            <button
+                              class="cell-action"
+                              type="button"
+                              disabled={savingDateId === row.id}
+                              on:click={cancelEdit}
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      {:else}
+                        <button class="date-display" type="button" on:click={() => beginEdit(row)}>
+                          {row.committedDate || '— set date'}
+                        </button>
+                      {/if}
                     {:else}
-                      <button class="date-display" type="button" on:click={() => beginEdit(row)}>
-                        {row.committedDate || '— set date'}
-                      </button>
+                      {row.committedDate || '—'}
                     {/if}
-                  {:else}
-                    {row.committedDate || '—'}
-                  {/if}
-                </td>
-                <td>{row.actualDate || '—'}</td>
-                <td>{row.slipEvents}</td>
-                <td>{row.status || '—'}</td>
-                <td>
-                  <span class={`health health-${row.health}`} title={row.healthLabel}></span>
-                </td>
-              </tr>
+                  </td>
+                  <td>{row.actualDate || '—'}</td>
+                  <td>{row.status || '—'}</td>
+                  <td>
+                    <span class={`health health-${row.health}`} title={row.healthLabel}></span>
+                  </td>
+                  <td class="col-numeric">{row.slipEvents}</td>
+                  <td class="col-numeric">{row.storyPoints ?? '—'}</td>
+                  <td>
+                    {#if row.dateSource}
+                      <DateSourceBadge source={row.dateSource} />
+                    {:else}
+                      <span class="muted">—</span>
+                    {/if}
+                  </td>
+                </tr>
+              {/if}
             {/each}
           {/each}
         </tbody>
@@ -164,7 +249,7 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1120px;
+    min-width: 1320px;
   }
 
   thead th {
@@ -175,6 +260,10 @@
     border-bottom: 1px solid var(--border);
     background: var(--bg2);
     text-align: left;
+  }
+
+  .col-numeric {
+    text-align: right;
   }
 
   .sort-button {
@@ -216,22 +305,54 @@
     background: color-mix(in srgb, var(--text) 1%, transparent);
   }
 
+  .story-row td {
+    background: transparent;
+  }
+
   tr.synthetic td {
     color: var(--text3);
   }
 
   .title-cell {
     display: flex;
-    flex-direction: column;
+    align-items: flex-start;
     gap: 8px;
   }
 
-  .title-cell.indented {
-    padding-left: 22px;
+  .indent-feature {
+    padding-left: 28px;
+  }
+
+  .indent-story {
+    padding-left: 52px;
+  }
+
+  .expand-toggle {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 10px;
+    line-height: 18px;
+    text-align: center;
+  }
+
+  .expand-toggle:hover {
+    color: var(--text);
+  }
+
+  .expand-spacer {
+    flex-shrink: 0;
+    width: 18px;
   }
 
   .title-text {
     color: var(--text);
+    flex: 1;
   }
 
   .type-pill {
@@ -242,6 +363,24 @@
     color: var(--text2);
     font-size: 12px;
     text-transform: capitalize;
+  }
+
+  .type-epic {
+    border-color: color-mix(in srgb, var(--blue) 35%, transparent);
+    background: color-mix(in srgb, var(--blue) 8%, transparent);
+    color: var(--blue-light);
+  }
+
+  .type-feature {
+    border-color: color-mix(in srgb, var(--purple) 35%, transparent);
+    background: color-mix(in srgb, var(--purple) 8%, transparent);
+    color: var(--purple-light);
+  }
+
+  .type-story {
+    border-color: color-mix(in srgb, var(--green) 35%, transparent);
+    background: color-mix(in srgb, var(--green) 8%, transparent);
+    color: var(--green-light);
   }
 
   .reassign-label {
@@ -319,6 +458,10 @@
   .health-amber { background: var(--amber); }
   .health-red { background: var(--coral); }
   .health-blue { background: var(--blue-light); }
+
+  .muted {
+    color: var(--text3);
+  }
 
   .state-card {
     padding: 24px;

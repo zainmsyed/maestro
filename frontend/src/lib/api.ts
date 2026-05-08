@@ -5,7 +5,7 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: BodyInit | JsonBody;
 };
 
-export class ApiError extends Error {
+class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
@@ -208,5 +208,10 @@ export const api = {
     apiFetch<FeatureRecord>(`/features/${id}/epic`, {
       method: 'PATCH',
       body: { epic_id: epicID },
+    }),
+  patchStoryFeature: (id: string, featureID: string) =>
+    apiFetch<StoryRecord>(`/stories/${id}/feature`, {
+      method: 'PATCH',
+      body: { feature_id: featureID },
     }),
 };

@@ -2,7 +2,7 @@
   import GroupBySelect from './GroupBySelect.svelte';
   import type { FilterState, GroupBy } from '../lib/listView';
 
-  export let filters: FilterState = { epic: '', owner: '', sprint: '', status: '' };
+  export let filters: FilterState = { epic: '', owner: '', sprint: '', status: '', type: '' };
   export let onFilterChange: (filters: FilterState) => void = () => {};
   export let groupBy: GroupBy = 'epic';
   export let epicOptions: string[] = [];
@@ -16,10 +16,11 @@
     owner: 'Owner',
     sprint: 'Sprint',
     status: 'Status',
+    type: 'Type',
   };
 
   function resetFilters() {
-    onFilterChange({ epic: '', owner: '', sprint: '', status: '' });
+    onFilterChange({ epic: '', owner: '', sprint: '', status: '', type: '' });
   }
 
   function updateFilter(key: keyof FilterState, event: Event) {
@@ -76,6 +77,16 @@
       </select>
     </label>
 
+    <label>
+      <span>Type</span>
+      <select value={filters.type} on:change={(event) => updateFilter('type', event)}>
+        <option value="">All types</option>
+        <option value="epic">Epic</option>
+        <option value="feature">Feature</option>
+        <option value="story">Story</option>
+      </select>
+    </label>
+
     <GroupBySelect bind:value={groupBy} />
   </div>
 
@@ -112,7 +123,7 @@
 
   .filters-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 14px;
     flex: 1;
   }
@@ -216,7 +227,7 @@
     background: var(--accent-a8);
   }
 
-  @media (max-width: 1100px) {
+  @media (max-width: 1200px) {
     .filter-bar {
       flex-direction: column;
       align-items: stretch;
