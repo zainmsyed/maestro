@@ -33,6 +33,24 @@
   let collapsedEpics: Record<string, boolean> = {};
   let collapsedFeatures: Record<string, boolean> = {};
 
+  function collapseAll() {
+    const nextEpics: Record<string, boolean> = {};
+    const nextFeatures: Record<string, boolean> = {};
+    for (const group of groups) {
+      for (const row of group.rows) {
+        if (row.type === 'epic') nextEpics[row.id] = true;
+        if (row.type === 'feature') nextFeatures[row.id] = true;
+      }
+    }
+    collapsedEpics = nextEpics;
+    collapsedFeatures = nextFeatures;
+  }
+
+  function expandAll() {
+    collapsedEpics = {};
+    collapsedFeatures = {};
+  }
+
   function toggleEpic(epicId: string) {
     collapsedEpics = { ...collapsedEpics, [epicId]: !collapsedEpics[epicId] };
   }
@@ -89,6 +107,10 @@
   {:else if groups.length === 0}
     <div class="state-card">No roadmap items match the current filters.</div>
   {:else}
+    <div class="table-actions">
+      <button type="button" class="action-link" on:click={collapseAll}>Collapse all</button>
+      <button type="button" class="action-link" on:click={expandAll}>Expand all</button>
+    </div>
     <div class="table-wrap">
       <table>
         <thead>
@@ -461,6 +483,30 @@
 
   .muted {
     color: var(--text3);
+  }
+
+  .table-actions {
+    display: flex;
+    gap: 16px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .action-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .action-link:hover {
+    color: var(--accent);
   }
 
   .state-card {
