@@ -296,12 +296,12 @@
   }
 
   .error-banner {
-    border-color: rgba(196, 97, 74, 0.45);
+    border-color: color-mix(in srgb, var(--coral) 45%, transparent);
     color: var(--coral);
   }
 
   .success-banner {
-    border-color: rgba(90, 143, 106, 0.45);
+    border-color: color-mix(in srgb, var(--green) 45%, transparent);
     color: var(--green-light);
   }
 
@@ -336,7 +336,7 @@
 
   .btn-primary:hover:not(:disabled),
   .btn-secondary:hover:not(:disabled) {
-    background: rgba(200, 169, 110, 0.08);
+    background: var(--accent-a8);
   }
 
   .btn-ghost:hover:not(:disabled) {

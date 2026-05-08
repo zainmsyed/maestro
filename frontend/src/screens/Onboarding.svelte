@@ -298,7 +298,7 @@
   .state-card {
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: linear-gradient(145deg, rgba(29, 29, 32, 0.94), rgba(22, 22, 24, 0.94));
+    background: var(--surface-glass);
     padding: 24px;
   }
 
@@ -373,7 +373,7 @@
     padding: 15px;
     border: 1px solid var(--border);
     border-radius: 8px;
-    background: rgba(22, 22, 24, 0.78);
+    background: var(--surface-panel);
   }
 
   .count-card span,
@@ -400,9 +400,9 @@
     display: grid;
     gap: 8px;
     padding: 14px 16px;
-    border: 1px solid rgba(196, 145, 74, 0.32);
+    border: 1px solid color-mix(in srgb, var(--amber) 32%, transparent);
     border-radius: 8px;
-    background: rgba(196, 145, 74, 0.06);
+    background: color-mix(in srgb, var(--amber) 6%, transparent);
   }
 
   .notice-list p {
@@ -479,7 +479,7 @@
   }
 
   button:hover {
-    background: rgba(200, 169, 110, 0.08);
+    background: var(--accent-a8);
   }
 
   @media (max-width: 980px) {

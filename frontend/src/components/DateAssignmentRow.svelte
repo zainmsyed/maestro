@@ -57,16 +57,16 @@
     padding: 16px 18px;
     border: 1px solid var(--border);
     border-radius: 8px;
-    background: rgba(22, 22, 24, 0.78);
+    background: var(--surface-panel);
   }
 
   .assignment-row.selected {
-    border-color: rgba(200, 169, 110, 0.32);
-    background: rgba(200, 169, 110, 0.05);
+    border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
   }
 
   .assignment-row.error {
-    border-color: rgba(196, 97, 74, 0.45);
+    border-color: color-mix(in srgb, var(--coral) 45%, transparent);
   }
 
   .select-cell {

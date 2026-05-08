@@ -15,6 +15,18 @@
   --text3: #555452;
   --accent: #c8a96e;
   --accent2: #8b6f3e;
+
+  /* Accent alpha scale */
+  --accent-a6: color-mix(in srgb, var(--accent) 6%, transparent);
+  --accent-a8: color-mix(in srgb, var(--accent) 8%, transparent);
+  --accent-a10: color-mix(in srgb, var(--accent) 10%, transparent);
+  --accent-a18: color-mix(in srgb, var(--accent) 18%, transparent);
+  --accent-a35: color-mix(in srgb, var(--accent) 35%, transparent);
+
+  /* Shared surfaces */
+  --surface-glass: linear-gradient(145deg, color-mix(in srgb, var(--bg3) 94%, transparent), color-mix(in srgb, var(--bg2) 94%, transparent));
+  --surface-panel: color-mix(in srgb, var(--bg2) 78%, transparent);
+
   --blue: #4a7fa5;
   --blue-light: #6ba3cc;
   --green: #5a8f6a;
@@ -204,7 +216,7 @@ button {
 }
 
 .primary-action:hover {
-  background: rgba(200, 169, 110, 0.08);
+  background: var(--accent-a8);
 }
 
 .content {
@@ -213,7 +225,7 @@ button {
   overflow: auto;
   padding: 32px;
   background:
-    radial-gradient(circle at top right, rgba(200, 169, 110, 0.06), transparent 34%),
+    radial-gradient(circle at top right, var(--accent-a6), transparent 34%),
     var(--bg);
 }
 
@@ -228,7 +240,7 @@ button {
 .panel-card {
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: linear-gradient(145deg, rgba(29, 29, 32, 0.94), rgba(22, 22, 24, 0.94));
+  background: var(--surface-glass);
 }
 
 .hero-card {
@@ -272,7 +284,7 @@ button {
   padding: 18px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: rgba(22, 22, 24, 0.78);
+  background: var(--surface-panel);
 }
 
 .placeholder-label,

@@ -226,7 +226,7 @@
     padding: 14px 16px;
     border: 1px solid var(--border);
     border-radius: 8px;
-    background: linear-gradient(145deg, rgba(29, 29, 32, 0.94), rgba(22, 22, 24, 0.94));
+    background: var(--surface-glass);
   }
 
   .header-summary span {
@@ -248,7 +248,7 @@
 
   .error-banner {
     padding: 16px 18px;
-    border: 1px solid rgba(196, 97, 74, 0.45);
+    border: 1px solid color-mix(in srgb, var(--coral) 45%, transparent);
     border-radius: 8px;
     background: var(--bg2);
     color: var(--coral);

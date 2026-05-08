@@ -67,7 +67,7 @@
   }
 
   .step.active .step-index {
-    background: rgba(200, 169, 110, 0.08);
+    background: var(--accent-a8);
   }
 
   .step-label,
@@ -101,7 +101,7 @@
   }
 
   .step-line.complete {
-    background: rgba(139, 111, 62, 0.7);
+    background: color-mix(in srgb, var(--accent2) 70%, transparent);
   }
 
   @media (max-width: 720px) {

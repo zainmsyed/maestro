@@ -88,11 +88,11 @@
     gap: 18px;
     min-height: 310px;
     padding: 36px;
-    border: 1px dashed rgba(139, 111, 62, 0.62);
+    border: 1px dashed color-mix(in srgb, var(--accent2) 62%, transparent);
     border-radius: 10px;
     background:
-      radial-gradient(circle at center, rgba(200, 169, 110, 0.07), transparent 55%),
-      linear-gradient(145deg, rgba(29, 29, 32, 0.94), rgba(22, 22, 24, 0.94));
+      radial-gradient(circle at center, color-mix(in srgb, var(--accent) 7%, transparent), transparent 55%),
+      var(--surface-glass);
     color: var(--text2);
     cursor: pointer;
     text-align: center;
@@ -102,13 +102,13 @@
   .drop-zone.active {
     border-color: var(--accent);
     background:
-      radial-gradient(circle at center, rgba(200, 169, 110, 0.13), transparent 56%),
-      linear-gradient(145deg, rgba(29, 29, 32, 0.96), rgba(22, 22, 24, 0.96));
+      radial-gradient(circle at center, color-mix(in srgb, var(--accent) 13%, transparent), transparent 56%),
+      linear-gradient(145deg, color-mix(in srgb, var(--bg3) 96%, transparent), color-mix(in srgb, var(--bg2) 96%, transparent));
     transform: translateY(-1px);
   }
 
   .drop-zone.error {
-    border-color: rgba(196, 97, 74, 0.7);
+    border-color: color-mix(in srgb, var(--coral) 70%, transparent);
   }
 
   .drop-zone.disabled {
@@ -162,7 +162,7 @@
   }
 
   .picker-button:hover:not(:disabled) {
-    background: rgba(200, 169, 110, 0.08);
+    background: var(--accent-a8);
   }
 
   .picker-button:disabled {

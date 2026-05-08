@@ -175,7 +175,7 @@
   .sprint-preview {
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: linear-gradient(145deg, rgba(29, 29, 32, 0.94), rgba(22, 22, 24, 0.94));
+    background: var(--surface-glass);
     padding: 24px;
   }
 
@@ -235,9 +235,9 @@
     gap: 14px;
     margin-bottom: 18px;
     padding: 16px;
-    border: 1px solid rgba(139, 111, 62, 0.32);
+    border: 1px solid color-mix(in srgb, var(--accent2) 32%, transparent);
     border-radius: 8px;
-    background: rgba(200, 169, 110, 0.04);
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
   }
 
   label {

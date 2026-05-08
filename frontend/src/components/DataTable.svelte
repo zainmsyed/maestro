@@ -152,7 +152,7 @@
   .data-table {
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: linear-gradient(145deg, rgba(29, 29, 32, 0.94), rgba(22, 22, 24, 0.94));
+    background: var(--surface-glass);
     overflow: hidden;
   }
 
@@ -205,7 +205,7 @@
 
   .group-row td {
     padding: 10px 14px;
-    background: rgba(200, 169, 110, 0.05);
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
     color: var(--accent);
     font-size: 12px;
     letter-spacing: 0.1em;
@@ -213,7 +213,7 @@
   }
 
   .feature-row td {
-    background: rgba(255, 255, 255, 0.01);
+    background: color-mix(in srgb, var(--text) 1%, transparent);
   }
 
   tr.synthetic td {
@@ -284,7 +284,7 @@
 
   .date-display:hover,
   .cell-action:hover {
-    background: rgba(200, 169, 110, 0.08);
+    background: var(--accent-a8);
     color: var(--text);
   }
 

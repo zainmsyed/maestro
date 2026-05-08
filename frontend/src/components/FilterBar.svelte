@@ -107,7 +107,7 @@
     padding: 18px 20px;
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: linear-gradient(145deg, rgba(29, 29, 32, 0.94), rgba(22, 22, 24, 0.94));
+    background: var(--surface-glass);
   }
 
   .filters-grid {
@@ -165,9 +165,9 @@
     gap: 8px;
     height: 32px;
     padding: 0 12px;
-    border: 1px solid rgba(200, 169, 110, 0.35);
+    border: 1px solid var(--accent-a35);
     border-radius: 999px;
-    background: rgba(200, 169, 110, 0.1);
+    background: var(--accent-a10);
     color: var(--text2);
     cursor: pointer;
     font-family: var(--font-mono);
@@ -177,7 +177,7 @@
   }
 
   .filter-chip:hover {
-    background: rgba(200, 169, 110, 0.18);
+    background: var(--accent-a18);
   }
 
   .filter-chip span,
@@ -213,7 +213,7 @@
 
   .primary:hover,
   .secondary:hover {
-    background: rgba(200, 169, 110, 0.08);
+    background: var(--accent-a8);
   }
 
   @media (max-width: 1100px) {
