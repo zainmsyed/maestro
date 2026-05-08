@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/fallow/config-schema.json",
+  "ignorePatterns": [
+    "frontend/src/test/setup.ts"
+  ],
+  "ignoreDependencies": [
+    "svelte-check"
+  ]
+}

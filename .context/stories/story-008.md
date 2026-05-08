@@ -1,10 +1,10 @@
 # Story 008: List view with inline editing and CSV export
 
-**Status:** completed  
+**Status:** complete  
 **Type:** ui
 **Created:** 2026-05-06
-**Last accessed:** 2026-05-07  
-**Completed:** 2026-05-07
+**Last accessed:** 2026-05-08  
+**Completed:** 2026-05-08
 
 ---
 

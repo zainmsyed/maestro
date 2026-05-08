@@ -1,5 +1,5 @@
 <script lang="ts">
-  type GroupBy = 'epic' | 'sprint' | 'owner';
+  import type { GroupBy } from '../lib/listView';
 
   export let value: GroupBy = 'epic';
 

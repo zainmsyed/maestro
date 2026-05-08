@@ -1,6 +1,6 @@
 export type CsvRow = Record<string, string | number | null | undefined>;
 
-function escapeCsv(value: string | number | null | undefined): string {
+export function escapeCsv(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return '';
   const text = String(value);
   if (/[",\n]/.test(text)) {
@@ -9,7 +9,7 @@ function escapeCsv(value: string | number | null | undefined): string {
   return text;
 }
 
-function buildCsv(rows: CsvRow[]): string {
+export function buildCsv(rows: CsvRow[]): string {
   if (rows.length === 0) return '';
   const headers = Object.keys(rows[0]);
   const lines = [headers.join(',')];

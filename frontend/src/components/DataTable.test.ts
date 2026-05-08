@@ -69,6 +69,38 @@ const baseGroups: ListGroup[] = [
   },
 ];
 
+describe('DataTable states', () => {
+  it('renders loading state when loading is true', () => {
+    render(DataTable, {
+      groups: baseGroups,
+      sortKey: 'title',
+      sortDirection: 'asc',
+      loading: true,
+      onSort: vi.fn(),
+      onSaveDate: vi.fn(),
+      onReassignFeature: vi.fn(),
+      epicOptions: [],
+    });
+
+    expect(screen.getByText(/loading list view/i)).toBeInTheDocument();
+  });
+
+  it('renders empty state when no groups match', () => {
+    render(DataTable, {
+      groups: [],
+      sortKey: 'title',
+      sortDirection: 'asc',
+      loading: false,
+      onSort: vi.fn(),
+      onSaveDate: vi.fn(),
+      onReassignFeature: vi.fn(),
+      epicOptions: [],
+    });
+
+    expect(screen.getByText(/no roadmap items match/i)).toBeInTheDocument();
+  });
+});
+
 describe('DataTable interactions', () => {
   it('calls onSort when a header is clicked', async () => {
     const onSort = vi.fn();

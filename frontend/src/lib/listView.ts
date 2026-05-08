@@ -31,11 +31,11 @@ export type FilterState = {
   status: string;
 };
 
-export function normalizeDate(value: string | null | undefined): string {
+function normalizeDate(value: string | null | undefined): string {
   return value ? value.slice(0, 10) : '';
 }
 
-export function deriveHealth(row: {
+function deriveHealth(row: {
   status: string;
   originalDate: string;
   committedDate: string;
@@ -137,7 +137,7 @@ function compareValues(a: string | number, b: string | number): number {
   return String(a).localeCompare(String(b), undefined, { sensitivity: 'base' });
 }
 
-export function normalizeOptionLabel(value: string | null | undefined, fallback = ''): string {
+function normalizeOptionLabel(value: string | null | undefined, fallback = ''): string {
   const normalized = (value ?? fallback)
     .trim()
     .replace(/\s+/g, ' ');
@@ -171,21 +171,26 @@ const sortValueByKey: Record<SortKey, (row: ListRow) => string | number> = {
   health: (row) => row.health,
 };
 
-export function rowSortValue(row: ListRow, key: SortKey): string | number {
+function rowSortValue(row: ListRow, key: SortKey): string | number {
   return sortValueByKey[key](row);
 }
 
+const filterPredicates: Record<keyof FilterState, (row: ListRow, value: string) => boolean> = {
+  epic: (row, value) => row.epicTitle === value,
+  owner: (row, value) => row.owner === value,
+  sprint: (row, value) => (row.sprint || 'Unassigned') === value,
+  status: (row, value) => row.status === value,
+};
+
 export function filterRows(rows: ListRow[], activeFilters: FilterState): ListRow[] {
-  return rows.filter((row) => {
-    if (activeFilters.epic && row.epicTitle !== activeFilters.epic) return false;
-    if (activeFilters.owner && row.owner !== activeFilters.owner) return false;
-    if (activeFilters.sprint && (row.sprint || 'Unassigned') !== activeFilters.sprint) return false;
-    if (activeFilters.status && row.status !== activeFilters.status) return false;
-    return true;
-  });
+  const activeEntries = Object.entries(activeFilters).filter(([, value]) => Boolean(value)) as Array<
+    [keyof FilterState, string]
+  >;
+  if (activeEntries.length === 0) return rows;
+  return rows.filter((row) => activeEntries.every(([key, value]) => filterPredicates[key](row, value)));
 }
 
-export function sortRows(rows: ListRow[], activeSortKey: SortKey, activeSortDirection: 'asc' | 'desc'): ListRow[] {
+function sortRows(rows: ListRow[], activeSortKey: SortKey, activeSortDirection: 'asc' | 'desc'): ListRow[] {
   return [...rows].sort((left, right) => {
     const result = compareValues(rowSortValue(left, activeSortKey), rowSortValue(right, activeSortKey));
     return activeSortDirection === 'asc' ? result : -result;

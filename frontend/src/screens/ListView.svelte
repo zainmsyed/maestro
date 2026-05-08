@@ -83,6 +83,16 @@
   $: filteredRows = filterRows(flatRows, filters);
   $: groupedRows = buildGroups(filteredRows, groupBy, sortKey, sortDirection);
 
+  const optionConfig: Record<
+    keyof FilterState,
+    { accessor: (r: ListRow) => string | null | undefined; fallback?: string; filterEmpty: boolean }
+  > = {
+    epic: { accessor: (r) => r.epicTitle, filterEmpty: true },
+    owner: { accessor: (r) => r.owner, filterEmpty: true },
+    sprint: { accessor: (r) => r.sprint, fallback: 'Unassigned', filterEmpty: false },
+    status: { accessor: (r) => r.status, filterEmpty: true },
+  };
+
   // Build options for one filter key from rows filtered by ALL OTHER keys.
   // This gives true cascading: picking an epic narrows Owner/Sprint/Status,
   // but the Epic dropdown still shows every epic that matches the other picks.
@@ -90,28 +100,25 @@
     key: keyof FilterState,
     rows: ListRow[],
     currentFilters: FilterState,
-    fallback?: string,
   ): string[] {
     const otherFilters = { ...currentFilters, [key]: '' };
     const filtered = filterRows(rows, otherFilters);
     const source = filtered.length > 0 ? filtered : rows;
     const active = currentFilters[key];
+    const config = optionConfig[key];
 
-    if (key === 'epic') {
-      return uniqueLabels([...source.map((r) => r.epicTitle).filter(Boolean), active].filter(Boolean));
+    let values = source.map(config.accessor);
+    if (config.filterEmpty) {
+      values = values.filter(Boolean);
     }
-    if (key === 'owner') {
-      return uniqueLabels([...source.map((r) => r.owner).filter(Boolean), active].filter(Boolean));
-    }
-    if (key === 'sprint') {
-      return uniqueLabels([...source.map((r) => r.sprint), ...(active ? [active] : [])], fallback);
-    }
-    return uniqueLabels([...source.map((r) => r.status).filter(Boolean), active].filter(Boolean));
+    if (active) values.push(active);
+
+    return uniqueLabels(values, config.fallback);
   }
 
   $: epicOptions = optionsForKey('epic', flatRows, filters);
   $: ownerOptions = optionsForKey('owner', flatRows, filters);
-  $: sprintOptions = optionsForKey('sprint', flatRows, filters, 'Unassigned');
+  $: sprintOptions = optionsForKey('sprint', flatRows, filters);
   $: statusOptions = optionsForKey('status', flatRows, filters);
 
   $: reassignOptions = epics.filter((epic) => !epic.is_synthetic).map((epic) => ({ id: epic.id, title: epic.title }));

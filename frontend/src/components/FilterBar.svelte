@@ -1,14 +1,6 @@
 <script lang="ts">
   import GroupBySelect from './GroupBySelect.svelte';
-
-  type GroupBy = 'epic' | 'sprint' | 'owner';
-
-  type FilterState = {
-    epic: string;
-    owner: string;
-    sprint: string;
-    status: string;
-  };
+  import type { FilterState, GroupBy } from '../lib/listView';
 
   export let filters: FilterState = { epic: '', owner: '', sprint: '', status: '' };
   export let onFilterChange: (filters: FilterState) => void = () => {};
