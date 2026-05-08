@@ -80,3 +80,5 @@ frontend/src/components/DataTable.test.ts — DataTable component tests for sort
 frontend/src/components/FilterBar.test.ts — FilterBar component tests for filter selection and chips
 frontend/src/lib/listView.test.ts — Unit tests for flatten, filter, group, sort, and export helpers
 frontend/src/lib/csvExport.test.ts — Unit tests for CSV escaping and row building edge cases
+
+frontend/src/components/DateSourceBadge.svelte — (undescribed)

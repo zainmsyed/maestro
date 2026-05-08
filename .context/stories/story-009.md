@@ -1,10 +1,10 @@
 # Story 009: Update List view for three-level hierarchy and date assignment
 
-**Status:** in-progress  
+**Status:** complete  
 **Type:** ui
 **Created:** 2026-05-06
 **Last accessed:** 2026-05-08  
-**Completed:** —
+**Completed:** 2026-05-08
 
 ---
 

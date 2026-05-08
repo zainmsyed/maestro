@@ -129,9 +129,9 @@
         <tbody>
           {#each groups as group}
             <tr class="group-row">
-              <td colspan={columns.length + 2}>{group.label}</td>
+              <td colspan={12}>{group.label}</td>
             </tr>
-            {#each group.rows as row, rowIndex}
+            {#each group.rows as row}
               {#if row.type === 'epic' || (row.type === 'feature' && !collapsedEpics[row.epicId ?? 'none']) || (row.type === 'story' && !collapsedEpics[row.epicId ?? 'none'] && !collapsedFeatures[row.featureId ?? 'none'])}
                 <tr
                   class:feature-row={row.type === 'feature'}
@@ -159,7 +159,7 @@
                           {!collapsedFeatures[row.id] ? '▼' : '▶'}
                         </button>
                       {:else}
-                        <span class="expand-spacer" style="width: 18px; flex-shrink: 0;"></span>
+                        <span class="expand-spacer"></span>
                       {/if}
                       <span class="title-text">{row.title}</span>
                       {#if row.type === 'feature' && row.isSynthetic}
@@ -373,6 +373,7 @@
   .expand-spacer {
     flex-shrink: 0;
     width: 18px;
+    display: inline-block;
   }
 
   .title-text {
