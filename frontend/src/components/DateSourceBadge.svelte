@@ -26,9 +26,8 @@
     display: inline-flex;
     padding: 2px 8px;
     border-radius: 999px;
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    text-transform: lowercase;
+    font-size: 12px;
+    letter-spacing: 0.03em;
     line-height: 1.4;
   }
 

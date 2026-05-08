@@ -116,7 +116,7 @@
         <thead>
           <tr>
             {#each columns as column}
-              <th scope="col">
+              <th scope="col" class:col-numeric={column.key === 'slip'}>
                 <button type="button" class="sort-button" on:click={() => onSort(column.key)}>
                   {column.label}{sortLabel(column.key)}
                 </button>
@@ -159,7 +159,7 @@
                           {!collapsedFeatures[row.id] ? '▼' : '▶'}
                         </button>
                       {:else}
-                        <span class="expand-spacer"></span>
+                        <span class="expand-spacer" style="width: 18px; flex-shrink: 0;"></span>
                       {/if}
                       <span class="title-text">{row.title}</span>
                       {#if row.type === 'feature' && row.isSynthetic}
@@ -264,24 +264,28 @@
   }
 
   .table-wrap {
-    max-height: calc(100vh - 280px);
-    overflow: auto;
+    overflow-x: auto;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1320px;
+    min-width: 1080px;
   }
 
   thead th {
     position: sticky;
     top: 0;
     z-index: 2;
-    padding: 12px 14px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--border);
     background: var(--bg2);
     text-align: left;
+    white-space: nowrap;
+    color: var(--text3);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   .col-numeric {
@@ -291,11 +295,9 @@
   .sort-button {
     border: 0;
     background: transparent;
-    color: var(--text3);
+    color: inherit;
     cursor: pointer;
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font: inherit;
   }
 
   .sort-button:hover {
@@ -303,11 +305,12 @@
   }
 
   td {
-    padding: 14px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--border);
     color: var(--text2);
-    font-size: 14px;
+    font-size: 12px;
     vertical-align: top;
+    white-space: nowrap;
   }
 
   tr:last-child td {
@@ -351,15 +354,15 @@
 
   .expand-toggle {
     flex-shrink: 0;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     padding: 0;
     border: 0;
     background: transparent;
     color: var(--text3);
     cursor: pointer;
-    font-size: 10px;
-    line-height: 18px;
+    font-size: 9px;
+    line-height: 16px;
     text-align: center;
   }
 
@@ -375,15 +378,19 @@
   .title-text {
     color: var(--text);
     flex: 1;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .type-pill {
     display: inline-flex;
-    padding: 3px 8px;
+    padding: 2px 6px;
     border: 1px solid var(--border);
     border-radius: 999px;
     color: var(--text2);
-    font-size: 12px;
+    font-size: 11px;
     text-transform: capitalize;
   }
 
