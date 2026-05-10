@@ -21,8 +21,7 @@
     { unit: 'month', step: 1, format: '%F %Y' },
   ];
   const sprintScales: IConfig['scales'] = [
-    { unit: 'week', step: 1, format: 'Week %W' },
-    { unit: 'day', step: 1, format: '%j' },
+    { unit: 'day', step: 1, format: '' },
   ];
   const columns: IColumnConfig[] = [
     { id: 'text', header: 'Work item', flexgrow: 1 },
