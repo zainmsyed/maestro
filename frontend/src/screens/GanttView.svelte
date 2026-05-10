@@ -395,6 +395,10 @@
     color: var(--text);
   }
 
+  :global(.gantt-card .wx-bar) {
+    border-radius: 10px !important;
+  }
+
   :global(.gantt-card .wx-marker) {
     pointer-events: none;
   }
