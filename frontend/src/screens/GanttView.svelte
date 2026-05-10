@@ -373,7 +373,7 @@
   }
 
   .gantt-card {
-    --wx-gantt-border: color-mix(in srgb, var(--border) 65%, transparent);
+    --wx-gantt-border: color-mix(in srgb, var(--border) 90%, transparent);
     --gantt-grey: color-mix(in srgb, var(--text2) 42%, var(--bg4));
     --gantt-grey-border: color-mix(in srgb, var(--text2) 58%, transparent);
     --gantt-blue: var(--blue);
