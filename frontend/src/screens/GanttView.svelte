@@ -267,6 +267,12 @@
       <button class="action-link" type="button" on:click={collapseAll}>Collapse all</button>
       <button class="action-link" type="button" on:click={expandAll}>Expand all</button>
     </div>
+    {#if viewMode === 'sprint' && selectedSprint}
+      <div class="sprint-banner">
+        <span class="sprint-label">Sprint</span>
+        <span class="sprint-dates">{selectedSprint.label}</span>
+      </div>
+    {/if}
     <div class="gantt-card">
       <Gantt
         tasks={visibleTasks}
@@ -493,6 +499,29 @@
 
   .action-link:hover {
     color: var(--accent);
+  }
+
+  .sprint-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-glass);
+  }
+
+  .sprint-label {
+    color: var(--text3);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .sprint-dates {
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
   }
 
   .gantt-card {
