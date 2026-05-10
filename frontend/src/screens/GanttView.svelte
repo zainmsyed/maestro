@@ -201,6 +201,7 @@
         {columns}
         {markers}
         readonly={true}
+        cellBorders="full"
         start={ganttStart}
         end={ganttEnd}
         lengthUnit="day"
