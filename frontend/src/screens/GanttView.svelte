@@ -5,16 +5,24 @@
   import { api, formatApiError, type EpicRecord } from '../lib/api';
   import { buildSvarTasks, type SvarTask } from '../lib/svarBridge';
 
+  type ViewMode = 'sprint' | 'timeline';
+
   let loading = true;
   let error: string | null = null;
   let epics: EpicRecord[] = [];
   let collapsedEpics = new Set<string>();
+  let viewMode: ViewMode = 'sprint';
+  let selectedSprintIndex = 0;
 
   const links: IConfig['links'] = [];
-  const cellWidth = 28;
   const dayMs = 24 * 60 * 60 * 1000;
-  const scales: IConfig['scales'] = [
+
+  const timelineScales: IConfig['scales'] = [
     { unit: 'month', step: 1, format: '%F %Y' },
+  ];
+  const sprintScales: IConfig['scales'] = [
+    { unit: 'week', step: 1, format: 'Week %W' },
+    { unit: 'day', step: 1, format: '%j' },
   ];
   const columns: IColumnConfig[] = [
     { id: 'text', header: 'Work item', flexgrow: 1 },
@@ -53,6 +61,31 @@
     if (!value) return null;
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  interface SprintWindow {
+    label: string;
+    start: Date;
+    end: Date;
+  }
+
+  function sprintWindowsFrom(records: EpicRecord[]): SprintWindow[] {
+    const windows = new Map<string, SprintWindow>();
+    for (const epic of records) {
+      const start = parseDate(epic.sprint_start);
+      const end = parseDate(epic.sprint_end);
+      if (start && end) {
+        const key = `${start.toISOString().slice(0, 10)}|${end.toISOString().slice(0, 10)}`;
+        if (!windows.has(key)) {
+          windows.set(key, {
+            label: `${start.toISOString().slice(0, 10)} → ${end.toISOString().slice(0, 10)}`,
+            start,
+            end,
+          });
+        }
+      }
+    }
+    return [...windows.values()].sort((a, b) => a.start.getTime() - b.start.getTime());
   }
 
   function sprintBoundariesFor(records: EpicRecord[]): Date[] {
@@ -122,6 +155,9 @@
     collapsedEpics = new Set();
   }
 
+  $: sprints = sprintWindowsFrom(epics);
+  $: selectedSprint = sprints[selectedSprintIndex] ?? null;
+
   $: tasks = buildSvarTasks(epics);
   $: visibleTasks = tasks.map((task: SvarTask) => {
     if (task.source_type === 'epic') {
@@ -131,12 +167,21 @@
   });
   $: featureCount = tasks.filter((task: SvarTask) => task.source_type === 'feature').length;
   $: missingDateCount = tasks.filter((task: SvarTask) => task.source_type === 'feature' && task.missing_committed_end).length;
-  $: timelineStart = minTaskDate(visibleTasks) ? addDays(minTaskDate(visibleTasks) as Date, -7) : null;
-  $: timelineEnd = maxTaskDate(visibleTasks) ? addDays(maxTaskDate(visibleTasks) as Date, 14) : null;
+
   $: sprintBoundaries = sprintBoundariesFor(epics);
   $: markers = buildMarkers(sprintBoundaries);
-  $: ganttStart = timelineStart ?? undefined;
-  $: ganttEnd = timelineEnd ?? undefined;
+
+  $: scales = viewMode === 'sprint' ? sprintScales : timelineScales;
+  $: cellWidth = viewMode === 'sprint' ? 48 : 28;
+
+  $: timelineStart = minTaskDate(visibleTasks) ? addDays(minTaskDate(visibleTasks) as Date, -7) : null;
+  $: timelineEnd = maxTaskDate(visibleTasks) ? addDays(maxTaskDate(visibleTasks) as Date, 14) : null;
+
+  $: sprintStart = selectedSprint ? addDays(selectedSprint.start, -2) : null;
+  $: sprintEnd = selectedSprint ? addDays(selectedSprint.end, 2) : null;
+
+  $: ganttStart = (viewMode === 'sprint' ? sprintStart : timelineStart) ?? undefined;
+  $: ganttEnd = (viewMode === 'sprint' ? sprintEnd : timelineEnd) ?? undefined;
   $: ganttStyleRules = taskStyleRules(visibleTasks);
 
   onMount(load);
@@ -190,6 +235,36 @@
     </section>
   {:else}
     <div class="gantt-toolbar">
+      <div class="view-switcher">
+        <button
+          class="view-btn"
+          class:active={viewMode === 'sprint'}
+          type="button"
+          on:click={() => (viewMode = 'sprint')}
+        >
+          Sprint
+        </button>
+        <button
+          class="view-btn"
+          class:active={viewMode === 'timeline'}
+          type="button"
+          on:click={() => (viewMode = 'timeline')}
+        >
+          Timeline
+        </button>
+      </div>
+      {#if viewMode === 'sprint' && sprints.length > 0}
+        <select
+          class="sprint-select"
+          value={selectedSprintIndex}
+          on:change={(e) => (selectedSprintIndex = Number((e.target as HTMLSelectElement).value))}
+        >
+          {#each sprints as sprint, i}
+            <option value={i}>{sprint.label}</option>
+          {/each}
+        </select>
+      {/if}
+      <div class="spacer" />
       <button class="action-link" type="button" on:click={collapseAll}>Collapse all</button>
       <button class="action-link" type="button" on:click={expandAll}>Expand all</button>
     </div>
@@ -347,12 +422,61 @@
   .gantt-toolbar {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     gap: 16px;
     padding: 12px 14px;
     border: 1px solid var(--border);
     border-radius: 10px;
     background: var(--surface-glass);
+  }
+
+  .view-switcher {
+    display: inline-flex;
+    gap: 0;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .view-btn {
+    padding: 6px 14px;
+    border: 0;
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .view-btn.active {
+    background: var(--accent-a18);
+    color: var(--accent);
+  }
+
+  .view-btn:hover:not(.active) {
+    background: var(--accent-a8);
+    color: var(--text);
+  }
+
+  .sprint-select {
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  .sprint-select:focus {
+    outline: none;
+    border-color: var(--accent2);
+  }
+
+  .spacer {
+    flex: 1;
   }
 
   .action-link {
