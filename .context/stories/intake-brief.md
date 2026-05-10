@@ -1,55 +1,59 @@
 # Intake Brief
 
-**Last updated:** 2026-05-06
+**Last updated:** 2026-05-09
 
 ## Planning brief
-Maestro is a self-contained roadmap and execution health tool for PMs using Azure DevOps. The PRD addendum introduces a prescribed "Tree of Work Items" query with a three-level hierarchy (Epic → Feature → Story), CSV-only import, header normalization, post-import PM date assignment, and `date_source` tracking.
-
-## Assumptions made
-- One Azure DevOps project per `maestro.db` file for the POC.
-- Hierarchy is three levels: Epic → Feature → Story. Story type names vary by process template (User Story / Product Backlog Item / Requirement).
-- Story rows in the prescribed query export may have empty `ID` fields; Maestro generates synthetic IDs for these.
-- JSON import is removed from POC scope; only CSV via the prescribed Tree query is supported.
-- `date_source` field tracks origin: `imported` (from DevOps Target Date), `pm_assigned` (set by PM in Maestro), `inherited` (from sprint end_date).
-- Items with `date_source = inherited` are excluded from Deadline Hit Rate and Slip Analysis.
-- The first PM-assigned date to an undated item becomes its locked `original_end_date`.
-- PM date assignment screen appears post-import before the Gantt; it can be skipped.
-- Synthetic unassigned epic and synthetic unassigned feature are auto-created for orphaned items.
-- Frontend design follows the reference mockup where possible; three-level nesting is an extension.
+Replan for SVAR Svelte Gantt integration. Retire custom-built Gantt stories (010–013) and replace with SVAR MIT-edition integration stories (018–022). Gantt renders Epic → Feature hierarchy only; Stories remain in List view and Health dashboard.
 
 ## Source files
-- `.context/intake/prd/maestro-prd.md` (25793 bytes) — Base POC requirements, data model, API spec, metrics.
-- `.context/intake/prd/maestro-prd-addendum-devops-query.md` (22996 bytes) — Prescribed query, three-level hierarchy, Story entity, parser spec, PM date insertion, view updates.
-- `.context/intake/references/maestro-mockup.html` (59259 bytes) — Reference screens with design tokens (two-level hierarchy; three-level is an extension).
+- .context/intake/prd/maestro-prd.md
+- .context/intake/prd/maestro-prd-addendum-devops-query.md
+- .context/intake/prd/maestro-prd-addendum-svar-gantt.md
+- .context/intake/references/Example_FinancialDashboard_Backlog.csv
+- .context/intake/references/maestro-mockup.html
 
 ## Distilled notes
+### PRD v0.3 + DevOps Query Addendum v2.0
+Core product unchanged: single-binary Go + Svelte SPA with SQLite. Prescribed Azure DevOps Tree query CSV import. Three-level hierarchy (Epic → Feature → Story) in data model and List view. Sprint-based timeline. Health dashboard with 6 metrics. Settings screens.
 
-### Objectives
-Build a self-contained roadmap and execution-health tool for PMs using Azure DevOps. POC targets: import-to-roadmap < 30s for 500 items, binary < 25 MB, startup < 2s.
+### SVAR Gantt Addendum v1.0
+Custom virtualized Gantt renderer (PRD §5.2 M3) replaced by `@svar-ui/svelte-gantt` MIT edition (v2.x for Svelte 5).
 
-### Users
-Internal product managers using Azure DevOps. Single-user local tool; no auth or multi-user in POC.
+**Native SVAR capabilities used:**
+- Hierarchical rows via `parent` field (Epic → Feature)
+- Drag-to-resize and drag-to-move on task bars
+- `onTaskClick` event for detail panel trigger
+- Expand/collapse summary rows (`open` flag)
+- Zoom via configurable `scales` array
+- Custom task styling via `css` callback
+- Virtualized rendering claimed by library
 
-### Stack
-Go backend, SQLite via `modernc.org/sqlite`, Vite + Svelte SPA frontend, Go `embed.FS` for single-binary distribution.
+**Custom work required:**
+- Data bridge: flat SVAR task array from Maestro Epic/Feature entities
+- Today line overlay (custom div, PRO-only in SVAR)
+- Sprint boundary overlay lines (custom CSS on day-based timeline)
+- Status color coding via `css` callback
+- Synthetic "Unassigned" Epic muted styling
+- Snap-to-sprint handler in `onAfterTaskDrag` (no native snap in MIT)
+- Detail panel slide-out on task click
 
-### Data model (updated)
-Epic, Feature, Sprint, DateAuditLog, **Story**. `original_end_date` is immutable once set (on import or first PM assignment). `committed_end_date` is PM-adjustable. `date_source` tracks origin. Synthetic unassigned epic and feature catch orphans.
+**Items with no valid start date:** omitted from Gantt array; flagged in List view.
 
-### Key product areas
-- **Import & Onboarding:** Prescribed Tree query CSV only, header normalization, validation, preview, post-import date assignment, sprint config.
-- **List View:** Three-level grouping, inline date editing, date source badges, click-to-assign, CSV export.
-- **Gantt Timeline:** Virtualized three-level nesting, draggable bars, stub bars for undated items, detail panel, snap-to-sprint toggle.
-- **Health Dashboard:** 6 base metrics + story-level variants, orphaned story rate, inherited date exclusion.
-- **Settings:** Sprint management, metrics thresholds, project config, re-import.
+**Bundle size:** M0 baseline measurement required before integration. Target < 25 MB binary. M3 ceiling tightened to 20 MB.
 
-### Constraints and non-goals
-No real-time sync, no auth/RBAC, no multi-user collaboration, no mobile-first UI, no write-back to Azure DevOps, no non-Azure integrations, no JSON import, no business-day math.
+**Licensing:** MIT edition only. No PRO features required.
 
-### Notable edge cases
-- Empty Story IDs in Tree query exports → synthetic IDs.
-- Empty Target Date → post-import date assignment list.
-- Date format variance across regional DevOps settings.
-- Ambiguous US (MM/DD/YYYY) vs EU (DD/MM/YYYY) dates.
-- Missing sprint or date data using fallback chain.
-- Orphaned Stories without parent Features → synthetic unassigned feature under unassigned epic.
+## Assumptions
+- Gantt shows Epic → Feature only. Stories exist in data model but are not rendered in Gantt (consistent with PRD §5.2).
+- Items with NULL start date (no sprint, no fallback) are excluded from Gantt array.
+- Today line and sprint boundaries are custom CSS overlays, not SVAR PRO markers.
+- Existing backend API (story-004) already supports PATCH endpoints for date updates.
+- `original_end_date` is never mutated by drag; only `committed_end_date` changes.
+
+## Planning rules
+- Treat listed source files as user-authored planning inputs unless they are explicitly marked as generated artifacts.
+- Vazir-generated files in .context/stories/ are replan context, not primary intake.
+- Read all text-based planning sources before asking questions.
+- Ask only implementation-blocking delta questions after reviewing this brief and any raw files you actually need.
+- State safe default assumptions briefly so the user can correct them.
+- Surface contradictions instead of resolving them silently.

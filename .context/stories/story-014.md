@@ -1,57 +1,49 @@
-# Story 014: Health dashboard with 6 metrics
+# Story 014: SVAR detail panel
 
 **Status:** not-started
 **Type:** ui
-**Created:** 2026-05-06
-**Last accessed:** 2026-05-06
+**Created:** 2026-05-09
+**Last accessed:** —
 **Completed:** —
 
 ---
 
 ## Goal
-Build the Health dashboard screen that surfaces all 6 execution metrics with clear visualizations, per-sprint charts, and a dedicated "Recoveries" callout for schedule improvements.
+Build a slide-out detail panel that opens when a PM clicks any Gantt bar (Epic or Feature). The panel shows read-only original date, editable committed date, status, owner, sprint, net slip days, and a chronological audit log of all date changes for that item.
 
 ## Verification
-Open the Health dashboard with test data. Verify each metric matches hand-calculated expectations for the fixture dataset. Confirm the Recoveries callout shows features with negative net slip days. Change a filter (epic or date range) and verify metrics recalculate.
+In the Gantt view, click a Feature bar. Verify a detail panel slides in from the right showing: title, type, owner, sprint, original end date (strikethrough), committed end date, status, net slip days, and an audit log table. Click the original date to confirm it is read-only. Change the committed date via the inline picker and confirm the bar updates and an audit entry is created. Close the panel by clicking the X or outside the panel.
 
 ## Scope — files this story may touch
-- `frontend/src/screens/HealthView.svelte`
-- `frontend/src/components/MetricCard.svelte`
-- `frontend/src/components/SprintLoadChart.svelte`
-- `frontend/src/components/VelocityChart.svelte`
-- `frontend/src/components/SlipDistribution.svelte`
-- `frontend/src/components/RecoveriesCallout.svelte`
-- `frontend/src/components/FilterBar.svelte`
-- `frontend/src/lib/api.ts`
+- `frontend/src/components/DetailPanel.svelte` (new)
+- `frontend/src/screens/GanttView.svelte`
+- `frontend/src/lib/api.ts` (audit log fetch)
+- `frontend/src/components/DatePicker.svelte` (reuse)
 
 ## Out of scope — do not touch
-- Metrics threshold editing (Settings → Metrics comes in story-016)
-- Gantt view
-- List view
+- Drag interactions (already in story-013)
+- List view detail panel (List uses inline editing)
+- Health dashboard
+- Settings screens
 
 ## Dependencies
-- story-004
-- story-005
+- story-011
+- story-012
 
 ---
 
 ## Checklist
-- [ ] Create `HealthView.svelte` with grid layout for metric cards
-- [ ] Deadline Hit Rate: percentage card with 4-sprint trend line
-- [ ] Sprint Load Index: per-sprint bar chart with underloaded/healthy/overloaded bands
-- [ ] Scope Creep Rate: percentage card with trend indicator
-- [ ] Slip Analysis: Slip Event Rate percentage, Avg Net Slip Days, distribution breakdown (1× / 2× / 3+ slip events)
-- [ ] Velocity Trend: rolling 4-sprint average line chart
-- [ ] Orphaned Feature Rate: percentage card with reassignment shortcut
-- [ ] Recoveries callout: count, total days recovered, top 3 features by days recovered
-- [ ] Add Epic and date-range filters that apply to all metrics
-- [ ] Handle missing capacity gracefully (show "—" with inline prompt)
-- [ ] Verify all formulas match PRD §5.4 exactly
-
----
+- [ ] Build `DetailPanel.svelte` as a fixed-position slide-out overlay
+- [ ] Wire `onTaskClick` on the SVAR Gantt to open the panel with the clicked task's ID
+- [ ] Fetch full entity detail (Epic or Feature) from existing `GET /api/epics/:id` or `GET /api/features/:id`
+- [ ] Fetch audit log via `GET /api/audit?entity_id={id}`
+- [ ] Display fields: title, type pill, owner, sprint name, original end date (read-only, strikethrough), committed end date (editable via `DatePicker`), status, net slip days, slip event count
+- [ ] Display audit log table: changed_at, old_date → new_date, delta_days, reason
+- [ ] Close panel via X button, Escape key, or click outside
+- [ ] Animate slide-in/slide-out
+- [ ] Handle loading and empty states for audit log
+- [ ] Verify committed date edit calls the same PATCH endpoint as drag and updates the bar optimistically
 
 ## Issues
-
----
 
 ## Completion Summary

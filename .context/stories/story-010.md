@@ -1,57 +1,48 @@
-# Story 010: Gantt timeline core rendering
+# Story 010: SVAR M0 spike — install, bundle baseline, API verification
 
 **Status:** in-progress  
 **Type:** ui
-**Created:** 2026-05-06
-**Last accessed:** 2026-05-08  
+**Created:** 2026-05-09
+**Last accessed:** 2026-05-10  
 **Completed:** —
 
 ---
 
 ## Goal
-Render the primary Gantt view: sprint headers on the X-axis, epic rows with expandable feature rows on the Y-axis, bars positioned by sprint dates with status colors, today line, and the synthetic "Unassigned" Epic at the bottom.
+Install `@svar-ui/svelte-gantt` into the frontend, verify it compiles and renders a minimal test chart, measure the bundle size impact, and confirm the three critical SVAR APIs needed for Maestro work as expected: drag-event date exposure, `css` callback access to full task object, and performance with 500+ tasks.
 
 ## Verification
-Navigate to the Timeline view. Verify all epics and features render as bars aligned to the correct sprint columns. Expand/collapse an epic. Confirm the "Unassigned" epic appears at the bottom in muted styling. Confirm the today line is visible.
+Run `cd frontend && npm install @svar-ui/svelte-gantt`, add a temporary test page with 500 synthetic tasks, build with `npm run build`, and confirm: (1) build succeeds without errors, (2) `dist/` size is recorded, (3) dragging a task exposes updated `start`/`end` dates in `on:afterTaskDrag`, (4) `css` callback receives custom fields like `status` and `is_synthetic`, (5) scroll remains smooth at 500 tasks. Document all findings in a spike notes file.
 
 ## Scope — files this story may touch
-- `frontend/src/screens/GanttView.svelte`
-- `frontend/src/components/GanttGrid.svelte`
-- `frontend/src/components/RowLabels.svelte`
-- `frontend/src/components/SprintHeader.svelte`
-- `frontend/src/components/GanttBar.svelte`
-- `frontend/src/components/TodayLine.svelte`
-- `frontend/src/lib/ganttLayout.ts`
+- `frontend/package.json`
+- `frontend/package-lock.json`
+- `frontend/src/screens/GanttView.svelte` (temporary test mount only)
+- `frontend/vite.config.ts` (if build tweaks needed)
+- A temporary spike test file (e.g., `frontend/src/lib/svarSpike.ts`)
 
 ## Out of scope — do not touch
-- Drag interactions (click only for now)
-- Detail panel slide-out
-- Virtualization (render all rows)
-- Zoom controls
+- Production GanttView implementation
+- Data bridge to real Maestro entities
+- Backend API changes
+- Custom overlays (today line, sprint boundaries)
+- Detail panel
 
 ## Dependencies
-- story-004
 - story-005
 
 ---
 
 ## Checklist
-- [ ] Create `GanttView.svelte` screen shell with topbar view-tabs integration
-- [ ] Build `SprintHeader.svelte` row showing sprint names and date ranges
-- [ ] Build `RowLabels.svelte` panel with epic rows and nested feature rows, expand/collapse chevrons
-- [ ] Implement `GanttGrid.svelte` with vertical grid lines per sprint
-- [ ] Create `GanttBar.svelte` for epics and `FeatureBar.svelte` for features
-- [ ] Position bars using sprint start date fallback chain (sprint start → sprint end → import date)
-- [ ] Apply status colors: grey (not started), blue (in progress), green (completed on time), red (missed)
-- [ ] Render synthetic "Unassigned" Epic at bottom with muted styling (italic, no color pill)
-- [ ] Add `TodayLine.svelte` vertical marker with "today" pip
-- [ ] Sync scroll between `RowLabels` and `GanttGrid` containers
-- [ ] Add zoom level state (sprint / month / quarter) with basic CSS scaling
-
----
+- [ ] `npm install @svar-ui/svelte-gantt` and resolve any peer dependency issues
+- [ ] Create a minimal SVAR Gantt test component with 500 synthetic tasks (flat array, no real data)
+- [ ] Build production bundle and record `dist/` total size and gzipped estimate
+- [ ] Verify `on:afterTaskDrag` exposes the modified task object with updated `start`/`end` dates
+- [ ] Verify `css` callback per task receives full task object including custom fields
+- [ ] Verify scroll and drag performance at 500 tasks (devtools Performance tab, no dropped frames)
+- [ ] Document spike findings: bundle size numbers, API behavior, any build warnings, go/no-go recommendation
+- [ ] Remove temporary test mount before story close
 
 ## Issues
-
----
 
 ## Completion Summary

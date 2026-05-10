@@ -1,4 +1,4 @@
-# Story 016: Settings screens
+# Story 016: Update Health dashboard for story-level metrics
 
 **Status:** not-started
 **Type:** ui
@@ -9,44 +9,45 @@
 ---
 
 ## Goal
-Build the Settings screen with sidebar navigation, project configuration, sprint management table with inline capacity editing, metrics thresholds, and import history with re-import and clear-data actions.
+Update the Health dashboard to support story-level metric calculations, add the Orphaned Story Rate metric, exclude inherited dates from slip analysis, and add a toggle between feature-level and story-level Deadline Hit Rate.
 
 ## Verification
-Open Settings → Sprints and edit a sprint's capacity inline. Refresh the page and confirm the value persisted. Navigate to Settings → Metrics and change the scope creep threshold to 20%. Return to the Health dashboard and confirm the warning boundary shifted.
+Open the Health dashboard with test data containing features and stories with mixed `date_source` values (imported, pm_assigned, inherited). Verify story-level Deadline Hit Rate differs from feature-level when stories have independent dates, inherited items are excluded from slip calculations, and Orphaned Story Rate appears as a new metric card.
 
 ## Scope — files this story may touch
-- `frontend/src/screens/SettingsView.svelte`
-- `frontend/src/components/SettingsNav.svelte`
-- `frontend/src/components/SprintTable.svelte`
-- `frontend/src/components/MetricsThresholds.svelte`
-- `frontend/src/components/ImportHistory.svelte`
+- `frontend/src/screens/HealthView.svelte`
+- `frontend/src/components/MetricCard.svelte`
+- `frontend/src/components/DeadlineHitRateToggle.svelte` (new)
+- `frontend/src/components/OrphanedStoryCard.svelte` (new)
 - `frontend/src/lib/api.ts`
-- `frontend/src/stores/settings.ts`
 
 ## Out of scope — do not touch
-- Auth or user management
-- Multi-project switching
-- External integrations beyond re-import
+- Gantt view
+- List view
+- Settings screens
+- Onboarding flow
+- Import parser
 
 ## Dependencies
 - story-004
-- story-005
-- story-014
+- story-015
 
 ---
 
 ## Checklist
-- [ ] Create `SettingsView.svelte` with sidebar nav and page content area
-- [ ] Project settings page: project name, team name inputs with save
-- [ ] Sprints page: full sprint table with inline capacity editing
-- [ ] Add "+ add sprint" button with manual creation form
-- [ ] Snap-to-sprint toggle with persistence
-- [ ] "Reset to import defaults" button with confirmation dialog
-- [ ] Metrics thresholds page: sprint load warning, scope creep warning, deadline hit rate target
-- [ ] Import history page: last import file, timestamp, item counts
-- [ ] Re-import button that routes to onboarding
-- [ ] "Clear all data" danger button with confirmation
-- [ ] Ensure all changes call the appropriate PATCH/POST APIs
+- [ ] Update `GET /api/metrics` backend to return both feature-level and story-level Deadline Hit Rate
+- [ ] Update `GET /api/metrics` to return story-level Scope Creep Rate (stories added after sprint start)
+- [ ] Update `GET /api/metrics` to return Orphaned Story Rate
+- [ ] Update slip analysis backend to exclude items with `date_source = 'inherited'` from all slip calculations
+- [ ] Update `HealthView.svelte` to show a toggle between Feature-level and Story-level Deadline Hit Rate
+- [ ] Add Orphaned Story Rate metric card with reassignment shortcut
+- [ ] Update Scope Creep Rate card to note it now includes Stories
+- [ ] Update Slip Analysis section to show inherited-excluded count
+- [ ] Update Sprint Load Index: unchanged (already uses story points at Story level)
+- [ ] Update Velocity Trend: unchanged
+- [ ] Update filter bar to include `date_source` filter option
+- [ ] Write backend tests verifying inherited exclusion and story-level calculations
+- [ ] Verify metrics match hand-calculated expectations for fixture data
 
 ---
 
