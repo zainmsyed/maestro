@@ -9,6 +9,7 @@
   export let ownerOptions: string[] = [];
   export let sprintOptions: string[] = [];
   export let statusOptions: string[] = [];
+  export let typeOptions: string[] = [];
   export let onExport: () => void;
 
   const filterLabels: Record<keyof FilterState, string> = {
@@ -81,9 +82,9 @@
       <span>Type</span>
       <select value={filters.type} on:change={(event) => updateFilter('type', event)}>
         <option value="">All types</option>
-        <option value="epic">Epic</option>
-        <option value="feature">Feature</option>
-        <option value="story">Story</option>
+        {#each typeOptions as option}
+          <option value={option}>{option}</option>
+        {/each}
       </select>
     </label>
 

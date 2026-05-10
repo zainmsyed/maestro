@@ -5,6 +5,7 @@
   import { view, type PrimaryView, type RoadmapMode } from './stores/view';
   import Onboarding from './screens/Onboarding.svelte';
   import ListView from './screens/ListView.svelte';
+  import GanttView from './screens/GanttView.svelte';
 
   let bootstrapping = true;
 
@@ -155,6 +156,8 @@
         <Onboarding on:complete={closeOnboarding} />
       {:else if $view.primary === 'list'}
         <ListView />
+      {:else if $view.primary === 'roadmap' && $view.roadmapMode === 'gantt'}
+        <GanttView />
       {:else}
         <div class="content-inner">
           <section class="hero-card">

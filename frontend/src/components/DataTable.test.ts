@@ -124,19 +124,21 @@ const baseGroups: ListGroup[] = [
   },
 ];
 
-function renderTable(props: Partial<ConstructorParameters<typeof DataTable>[0]> = {}) {
+function renderTable(props: Record<string, any> = {}) {
   return render(DataTable, {
-    groups: baseGroups,
-    sortKey: 'title',
-    sortDirection: 'asc',
-    loading: false,
-    onSort: vi.fn(),
-    onSaveDate: vi.fn(),
-    onReassignFeature: vi.fn(),
-    onReassignStory: vi.fn(),
-    epicOptions: [],
-    featureOptions: [],
-    ...props,
+    props: {
+      groups: baseGroups,
+      sortKey: 'title',
+      sortDirection: 'asc',
+      loading: false,
+      onSort: vi.fn(),
+      onSaveDate: vi.fn(),
+      onReassignFeature: vi.fn(),
+      onReassignStory: vi.fn(),
+      epicOptions: [],
+      featureOptions: [],
+      ...props,
+    },
   });
 }
 

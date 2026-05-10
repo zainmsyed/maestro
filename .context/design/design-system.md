@@ -16,8 +16,8 @@
 - Scale: 1.0">
 
 ## Spacing
-- Base unit: —
-- Scale: 1.0">
+- Base unit: 8px <!-- source: story-011 -->
+- Scale: cozy, not dense — 8, 12, 16, 24, 32px for common gaps/padding <!-- source: story-011 -->
 
 ## Component conventions
-- —
+- Cozy dark UI with comfortable padding, readable data density, and no extra constraints beyond existing rounded panels/buttons. <!-- source: story-011 -->
