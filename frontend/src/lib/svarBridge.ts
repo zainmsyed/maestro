@@ -144,6 +144,7 @@ function buildEpicTask(epic: EpicRecord, children: SvarTask[]): SvarTask {
     open: children.length > 0,
     status: epic.status,
     owner: epic.owner,
+    sprint: epic.sprint_end,
     is_synthetic: epic.is_synthetic,
     source_type: 'epic',
     maestro_id: epic.id,

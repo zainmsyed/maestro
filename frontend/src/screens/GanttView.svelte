@@ -12,7 +12,7 @@
   let epics: EpicRecord[] = [];
   let collapsedEpics = new Set<string>();
   let viewMode: ViewMode = 'sprint';
-  let selectedSprintIndex = 0;
+  let selectedSprintLabel = '';
 
   const links: IConfig['links'] = [];
   const dayMs = 24 * 60 * 60 * 1000;
@@ -62,29 +62,18 @@
     return Number.isNaN(date.getTime()) ? null : date;
   }
 
-  interface SprintWindow {
-    label: string;
-    start: Date;
-    end: Date;
-  }
-
-  function sprintWindowsFrom(records: EpicRecord[]): SprintWindow[] {
-    const windows = new Map<string, SprintWindow>();
+  function sprintLabelsFrom(records: EpicRecord[]): string[] {
+    const labels = new Set<string>();
     for (const epic of records) {
-      const start = parseDate(epic.sprint_start);
-      const end = parseDate(epic.sprint_end);
-      if (start && end) {
-        const key = `${start.toISOString().slice(0, 10)}|${end.toISOString().slice(0, 10)}`;
-        if (!windows.has(key)) {
-          windows.set(key, {
-            label: `${start.toISOString().slice(0, 10)} → ${end.toISOString().slice(0, 10)}`,
-            start,
-            end,
-          });
+      if (epic.sprint_end) labels.add(epic.sprint_end);
+      for (const feature of epic.features) {
+        if (feature.sprint) labels.add(feature.sprint);
+        for (const story of feature.stories ?? []) {
+          if (story.sprint) labels.add(story.sprint);
         }
       }
     }
-    return [...windows.values()].sort((a, b) => a.start.getTime() - b.start.getTime());
+    return [...labels].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }
 
   function sprintBoundariesFor(records: EpicRecord[]): Date[] {
@@ -154,11 +143,20 @@
     collapsedEpics = new Set();
   }
 
-  $: sprints = sprintWindowsFrom(epics);
-  $: selectedSprint = sprints[selectedSprintIndex] ?? null;
+  $: sprintLabels = sprintLabelsFrom(epics);
+  $: selectedSprint = sprintLabels.includes(selectedSprintLabel) ? selectedSprintLabel : sprintLabels[0] ?? '';
 
   $: tasks = buildSvarTasks(epics);
-  $: visibleTasks = tasks.map((task: SvarTask) => {
+  $: sprintTasks = selectedSprint
+    ? tasks.filter((task: SvarTask) => {
+        if (task.source_type === 'epic') {
+          // Keep epic if it matches the sprint OR any child does
+          return task.sprint === selectedSprint || tasks.some((t) => t.parent === task.id && t.sprint === selectedSprint);
+        }
+        return task.sprint === selectedSprint;
+      })
+    : tasks;
+  $: visibleTasks = sprintTasks.map((task: SvarTask) => {
     if (task.source_type === 'epic') {
       return { ...task, open: !collapsedEpics.has(task.id) };
     }
@@ -176,11 +174,8 @@
   $: timelineStart = minTaskDate(visibleTasks) ? addDays(minTaskDate(visibleTasks) as Date, -7) : null;
   $: timelineEnd = maxTaskDate(visibleTasks) ? addDays(maxTaskDate(visibleTasks) as Date, 14) : null;
 
-  $: sprintStart = selectedSprint ? addDays(selectedSprint.start, -2) : null;
-  $: sprintEnd = selectedSprint ? addDays(selectedSprint.end, 2) : null;
-
-  $: ganttStart = (viewMode === 'sprint' ? sprintStart : timelineStart) ?? undefined;
-  $: ganttEnd = (viewMode === 'sprint' ? sprintEnd : timelineEnd) ?? undefined;
+  $: ganttStart = timelineStart ?? undefined;
+  $: ganttEnd = timelineEnd ?? undefined;
   $: ganttStyleRules = taskStyleRules(visibleTasks);
 
   onMount(load);
@@ -252,14 +247,14 @@
           Timeline
         </button>
       </div>
-      {#if viewMode === 'sprint' && sprints.length > 0}
+      {#if viewMode === 'sprint' && sprintLabels.length > 0}
         <select
           class="sprint-select"
-          value={selectedSprintIndex}
-          on:change={(e) => (selectedSprintIndex = Number((e.target as HTMLSelectElement).value))}
+          value={selectedSprint}
+          on:change={(e) => (selectedSprintLabel = (e.target as HTMLSelectElement).value)}
         >
-          {#each sprints as sprint, i}
-            <option value={i}>{sprint.label}</option>
+          {#each sprintLabels as label}
+            <option value={label}>{label}</option>
           {/each}
         </select>
       {/if}
@@ -270,7 +265,7 @@
     {#if viewMode === 'sprint' && selectedSprint}
       <div class="sprint-banner">
         <span class="sprint-label">Sprint</span>
-        <span class="sprint-dates">{selectedSprint.label}</span>
+        <span class="sprint-dates">{selectedSprint}</span>
       </div>
     {/if}
     <div class="gantt-card">
