@@ -1,25 +1,24 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Gantt } from '@svar-ui/svelte-gantt';
-  import type { IConfig, IColumnConfig, IMarker } from '@svar-ui/svelte-gantt';
+  import type { IConfig, IColumnConfig, IMarker, IApi } from '@svar-ui/svelte-gantt';
   import { api, formatApiError, type EpicRecord } from '../lib/api';
   import { buildSvarTasks, type SvarTask } from '../lib/svarBridge';
 
   let loading = true;
   let error: string | null = null;
   let epics: EpicRecord[] = [];
+  let collapsedEpics = new Set<string>();
 
   const links: IConfig['links'] = [];
   const cellWidth = 28;
   const dayMs = 24 * 60 * 60 * 1000;
   const scales: IConfig['scales'] = [
     { unit: 'month', step: 1, format: '%F %Y' },
-    { unit: 'day', step: 1, format: '%j' },
   ];
   const columns: IColumnConfig[] = [
     { id: 'text', header: 'Work item', flexgrow: 1 },
     { id: 'owner', header: 'Owner', width: 160 },
-    { id: 'sprint', header: 'Sprint', width: 120 },
   ];
 
   async function load() {
@@ -101,19 +100,51 @@
       .join('\n');
   }
 
+  function onGanttInit(ganttApi: IApi) {
+    ganttApi.intercept('open-task', ({ id }: { id: string | number; mode: boolean }) => {
+      const sid = String(id);
+      collapsedEpics = new Set(collapsedEpics);
+      if (collapsedEpics.has(sid)) {
+        collapsedEpics.delete(sid);
+      } else {
+        collapsedEpics.add(sid);
+      }
+      return false;
+    });
+  }
+
+  function collapseAll() {
+    const all = tasks.filter((t: SvarTask) => t.source_type === 'epic').map((t) => t.id);
+    collapsedEpics = new Set(all);
+  }
+
+  function expandAll() {
+    collapsedEpics = new Set();
+  }
+
   $: tasks = buildSvarTasks(epics);
+  $: visibleTasks = tasks.map((task: SvarTask) => {
+    if (task.source_type === 'epic') {
+      return { ...task, open: !collapsedEpics.has(task.id) };
+    }
+    return task;
+  });
   $: featureCount = tasks.filter((task: SvarTask) => task.source_type === 'feature').length;
   $: missingDateCount = tasks.filter((task: SvarTask) => task.source_type === 'feature' && task.missing_committed_end).length;
-  $: timelineStart = minTaskDate(tasks) ? addDays(minTaskDate(tasks) as Date, -7) : null;
-  $: timelineEnd = maxTaskDate(tasks) ? addDays(maxTaskDate(tasks) as Date, 14) : null;
+  $: timelineStart = minTaskDate(visibleTasks) ? addDays(minTaskDate(visibleTasks) as Date, -7) : null;
+  $: timelineEnd = maxTaskDate(visibleTasks) ? addDays(maxTaskDate(visibleTasks) as Date, 14) : null;
   $: sprintBoundaries = sprintBoundariesFor(epics);
   $: markers = buildMarkers(sprintBoundaries);
   $: ganttStart = timelineStart ?? undefined;
   $: ganttEnd = timelineEnd ?? undefined;
-  $: ganttStyleRules = taskStyleRules(tasks);
+  $: ganttStyleRules = taskStyleRules(visibleTasks);
 
   onMount(load);
 </script>
+
+<svelte:head>
+  <link rel="stylesheet" href="https://cdn.svar.dev/fonts/wxi/wx-icons.css" />
+</svelte:head>
 
 <section class="gantt-view" aria-label="Gantt roadmap view">
   <div class="screen-header">
@@ -151,16 +182,20 @@
       <h2>No roadmap data yet</h2>
       <p>Import a CSV to populate the Gantt timeline.</p>
     </section>
-  {:else if tasks.length === 0}
+  {:else if visibleTasks.length === 0}
     <section class="state-card">
       <p class="eyebrow">Empty</p>
       <h2>No schedulable tasks</h2>
       <p>No epics or features had enough date information to render on the timeline.</p>
     </section>
   {:else}
+    <div class="gantt-toolbar">
+      <button class="action-link" type="button" on:click={collapseAll}>Collapse all</button>
+      <button class="action-link" type="button" on:click={expandAll}>Expand all</button>
+    </div>
     <div class="gantt-card">
       <Gantt
-        {tasks}
+        tasks={visibleTasks}
         {links}
         {scales}
         {columns}
@@ -170,8 +205,9 @@
         end={ganttEnd}
         lengthUnit="day"
         {cellWidth}
-        cellHeight={34}
+        cellHeight={48}
         scaleHeight={44}
+        init={onGanttInit}
       />
       {@html `<style>${ganttStyleRules}</style>`}
     </div>
@@ -307,6 +343,34 @@
     background: var(--accent-a8);
   }
 
+  .gantt-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-glass);
+  }
+
+  .action-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .action-link:hover {
+    color: var(--accent);
+  }
+
   .gantt-card {
     --gantt-grey: color-mix(in srgb, var(--text2) 42%, var(--bg4));
     --gantt-grey-border: color-mix(in srgb, var(--text2) 58%, transparent);
@@ -358,6 +422,15 @@
 
   :global(.gantt-card .wx-marker.maestro-sprint-boundary .wx-content) {
     display: none;
+  }
+
+  :global(.gantt-card .wx-toggle-icon) {
+    color: var(--text3) !important;
+    cursor: pointer;
+  }
+
+  :global(.gantt-card .wx-toggle-icon:hover) {
+    color: var(--text) !important;
   }
 
   @media (max-width: 980px) {
